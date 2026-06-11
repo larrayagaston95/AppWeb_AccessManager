@@ -1,0 +1,133 @@
+/* ==========================================================================
+   FLUXTECH ACCESSMANAGER - ESTILOS DE IMPRESIÓN ADAPTADOS A FORMULARIO
+   ========================================================================== */
+
+/* 1. Ocultamos los botones de control interactivos que no van en papel */
+#btnPDF,
+#btnSalir,
+#btnFiltrar,
+.navbar-brand small,
+.btn,
+.form-label {
+    display: none !important;
+}
+
+/* 2. Configuración general de la hoja en blanco y tipografía limpia */
+body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, sans-serif !important;
+    padding: 10px !important;
+    margin: 0 !important;
+}
+
+/* 3. Reorganización del encabezado del reporte (Estilo membrete de la imagen) */
+#mainHeader {
+    background-color: #ffffff !important;
+    border-bottom: 2px solid #000000 !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 25px !important;
+    display: block !important;
+}
+
+/* Forzamos que la barra superior se transforme en un layout horizontal de oficina */
+#mainHeader .navbar {
+    background-color: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+#mainHeader .container-fluid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+}
+
+/* Logo de la empresa posicionado a la izquierda */
+#mainHeader .brand-logo-container {
+    display: block !important;
+    order: 1 !important; /* Lo fuerza a pararse primero a la izquierda */
+    border: none !important;
+    padding: 0 !important;
+}
+
+#mainHeader .brand-logo-container div {
+    background-color: transparent !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important; /* Texto de la cooperativa más chico */
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    border-radius: 4px !important;
+}
+
+/* Título de la plataforma (AccessManager) a la derecha, bien sutil */
+#mainHeader .navbar-brand {
+    order: 2 !important; /* Se mueve a la derecha */
+    color: #000000 !important;
+    font-size: 14px !important; /* Más compacto */
+    font-weight: bold !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* El badge del cliente KDL en formato de texto plano e integrado */
+#mainHeader .badge {
+    display: inline-block !important;
+    background-color: transparent !important;
+    color: #000000 !important;
+    border: none !important;
+    font-size: 11px !important;
+    padding: 0 !important;
+    font-weight: bold !important;
+}
+
+/* 4. Datos del reporte (Inyección automatizada en la parte baja del cabezal) */
+#mainHeader::after {
+    content: "REPORTE GENERAL DE ASISTENCIA   |   CLIENTE DETALLE: KDL   |   EMISIÓN DE DOCUMENTO: 11/06/2026";
+    display: block !important;
+    font-size: 9.5px !important; /* Letra mucho más chica y organizada */
+    color: #555555 !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 12px !important;
+}
+
+/* 5. Ocultamos la caja de filtros completa para que no aparezca el bloque gris vacío */
+.bg-dark-card,
+#selectSucursal,
+#selectSeccion,
+#selectEmpleado,
+#selectAnio,
+#selectMes {
+    display: none !important;
+}
+
+/* 6. Diseño clásico de la tabla de asistencia (Líneas finas de la imagen) */
+#tableAsistencia {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 15px !important;
+}
+
+#tableAsistencia th {
+    background-color: #f5f5f5 !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+}
+
+#tableAsistencia td {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+}

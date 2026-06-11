@@ -7,7 +7,7 @@ export function renderHeader(onSalirCallback) {
     if (!headerContainer) return;
 
     headerContainer.innerHTML = `
-        <!-- NAVBAR SUPERIOR INSTITUTIONAL (Tamaño normal y legible) -->
+        <!-- NAVBAR SUPERIOR INSTITUTIONAL -->
         <nav class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
             <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
 
@@ -19,7 +19,7 @@ export function renderHeader(onSalirCallback) {
                     <span class="text-muted small ms-2 d-none d-sm-inline">by FLUXTECH</span>
                 </div>
 
-                <!-- Bloque de control y Logo Corporativo (Visible en impresión) -->
+                <!-- Bloque de control y Logo Corporativo -->
                 <div class="d-flex align-items-center gap-3">
 
                     <!-- Logo de la Cooperativa / Empresa -->
@@ -111,7 +111,7 @@ export function renderHeader(onSalirCallback) {
         </div>
     `;
 
-    // Eventos seguros
+    // Evento original que dispara la impresión del navegador
     const btnPDF = document.getElementById('btnPDF');
     if (btnPDF) {
         btnPDF.addEventListener('click', () => { window.print(); });

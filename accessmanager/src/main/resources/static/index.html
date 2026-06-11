@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessManager - Panel Corporativo KDL</title>
+    <!-- Bootstrap 5 & Iconos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Estilos Propios Aislados -->
+    <link href="./css/layout.css" rel="stylesheet">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- 🔒 CONTROL DE ACCESO (LOGIN) -->
+<div id="vistaLogin" class="container d-flex justify-content-center align-items-center flex-grow-1">
+    <div class="card p-4 card-kpi" style="width: 100%; max-width: 400px;">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-turquoise"><i class="bi bi-shield-lock-fill me-2"></i>AccessManager</h2>
+            <p class="text-muted small">Ingresá la credencial del sistema para continuar</p>
+        </div>
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">TOKEN DE ACCESO</label>
+            <input type="password" id="inputToken" class="form-control bg-dark text-white border-secondary" placeholder="••••••••">
+        </div>
+        <button id="btnIngresar" class="btn btn-info w-100 fw-bold">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Ingresar
+        </button>
+        <div id="loginError" class="text-danger text-center small mt-3 d-none">Token incorrecto. Intentá de nuevo.</div>
+    </div>
+</div>
+
+<!-- 📊 PANEL DE CONTROL PRINCIPAL (Oculto de entrada) -->
+<div id="vistaPanel" class="d-none flex-grow-1 d-flex flex-column">
+
+    <!-- ENCABEZADO (Se inyecta dinámicamente) -->
+    <header id="mainHeader"></header>
+
+    <!-- CUERPO PRINCIPAL -->
+    <main class="container-fluid px-4 flex-grow-1">
+
+        <!-- Barra de Filtros Operativos -->
+        <div class="row g-3 mb-4 align-items-end p-3 rounded card-kpi">
+            <div class="col-md-4">
+                <label class="form-label text-muted small fw-bold">EMPLEADO</label>
+                <select id="selectEmpleado" class="form-select bg-dark text-white border-secondary">
+                    <option value="101">Gaston Larraya (101)</option>
+                    <option value="102" selected>Juan Perez (102)</option>
+                    <option value="103">Carlos Gomez (103)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">AÑO</label>
+                <select id="selectAnio" class="form-select bg-dark text-white border-secondary">
+                    <option value="2026" selected>2026</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">MES</label>
+                <select id="selectMes" class="form-select bg-dark text-white border-secondary">
+                    <option value="6" selected>Junio</option>
+                    <option value="5">Mayo</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button id="btnFiltrar" class="btn btn-info w-100 fw-bold">
+                    <i class="bi bi-search me-1"></i> Filtrar
+                </button>
+            </div>
+        </div>
+
+        <!-- Bloque de Módulos KPI (Se inyectan dinámicamente acá) -->
+        <div id="contenedorKPI" class="row g-3 mb-4"></div>
+
+        <!-- Tabla Detalle de Asistencia -->
+        <div class="table-responsive table-custom p-3 mb-5">
+            <h5 class="fw-bold mb-3"><i class="bi bi-list-task me-2 text-turquoise"></i>Detalle de Asistencia Mensual</h5>
+            <table class="table table-dark table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Entrada</th>
+                    <th>Salida</th>
+                    <th class="text-center">Horas Trabajadas</th>
+                    <th class="text-center">Horas Extras</th>
+                    <th>Estado / Observación</th>
+                </tr>
+                </thead>
+                <tbody id="tablaCuerpo"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- PIE DE PÁGINA (Se inyecta dinámicamente) -->
+    <footer id="mainFooter" class="mt-auto"></footer>
+</div>
+
+<!-- SCRIPT MAESTRO DE ARRANQUE -->
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

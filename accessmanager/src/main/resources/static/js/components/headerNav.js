@@ -31,9 +31,9 @@ export function renderHeader(onSalirCallback) {
 
                     <span class="badge bg-dark border border-secondary text-light fw-bold px-3 py-2" style="font-size: 12px;">CLIENTE: KDL</span>
 
-                    <button id="btnPDF" class="btn btn-outline-info btn-sm fw-bold px-3">
-                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar PDF
-                    </button>
+                  <button type=\"button\" id=\"btnPDF\" class=\"btn btn-danger d-flex align-items-center gap-2 shadow-sm fw-semibold px-3\">
+                          <i class=\"bi bi-file-earmark-pdf-fill fs-5\"></i> Exportar PDF
+                      </button>
 
                     <button id="btnSalir" class="btn btn-outline-danger btn-sm fw-bold px-3">
                         <i class="bi bi-box-arrow-left me-1"></i> Salir
@@ -111,11 +111,7 @@ export function renderHeader(onSalirCallback) {
         </div>
     `;
 
-    // Evento original que dispara la impresión del navegador
-    const btnPDF = document.getElementById('btnPDF');
-    if (btnPDF) {
-        btnPDF.addEventListener('click', () => { window.print(); });
-    }
+
 
     const btnSalir = document.getElementById('btnSalir');
     if (btnSalir) {

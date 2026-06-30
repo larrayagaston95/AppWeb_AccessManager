@@ -80,7 +80,8 @@ public class AsistenciaService {
             double horasTrabajadas = duracion.toMinutes() / 60.0;
             reporte.setHorasTrabajadas(Math.round(horasTrabajadas * 100.0) / 100.0);
 
-            double jornadaBase = emp.getHorasJornadaBase();
+//            double jornadaBase = emp.getHorasJornadaBase();
+            double jornadaBase = 8.0; // Hardcodeado temporalmente en 8 horas
             if (horasTrabajadas > jornadaBase) {
                 double extras = horasTrabajadas - Math.round(jornadaBase);
                 reporte.setHorasExtras(Math.round(extras * 100.0) / 100.0);
@@ -103,4 +104,19 @@ public class AsistenciaService {
         LocalDate fin = inicio.plusMonths(1).minusDays(1);
         return reporteAsistenciaRepository.findByEmpleadoLegajoRelojAndFechaBetweenOrderByFechaAsc(legajo, inicio, fin);
     }
+
+    /**
+     * Recupera el reporte mensual masivo filtrado por Empresa (Cliente), Sucursal y Sector
+     */
+    public List<ReporteAsistencia> obtenerReporteMensualMasivo(Long empresaId, String sucursal, Long sectorId, int anio, int mes) {
+        LocalDate fechaInicio = LocalDate.of(anio, mes, 1);
+        LocalDate fechaFin = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
+
+        return reporteAsistenciaRepository.findByEmpleadoEmpresaIdAndEmpleadoSucursalAndEmpleadoSectorIdAndFechaBetweenOrderByEmpleadoLegajoRelojAscFechaAsc(
+                empresaId, sucursal, sectorId, fechaInicio, fechaFin
+        );
+    }
+
+
+
 }

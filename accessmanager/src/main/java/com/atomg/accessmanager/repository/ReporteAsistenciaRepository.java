@@ -9,9 +9,19 @@ import java.util.List;
 @Repository
 public interface ReporteAsistenciaRepository extends JpaRepository<ReporteAsistencia, Long> {
 
-    // Busca todo el historial calculado de un empleado entre dos fechas (ideal para el reporte mensual)
+    // 1. Tu consulta individual existente (Sigue funcionando igual por legajo)
     List<ReporteAsistencia> findByEmpleadoLegajoRelojAndFechaBetweenOrderByFechaAsc(
             String legajoReloj,
+            LocalDate fechaInicio,
+            LocalDate fechaFin
+    );
+
+    // 🚀 2. CORREGIDA: Consulta masiva usando las nuevas relaciones estructurales
+    // Hibernate va a navegar automáticamente de Empleado -> Empresa (id) y de Empleado -> Sector (id)
+    List<ReporteAsistencia> findByEmpleadoEmpresaIdAndEmpleadoSucursalAndEmpleadoSectorIdAndFechaBetweenOrderByEmpleadoLegajoRelojAscFechaAsc(
+            Long empresaId,
+            String sucursal,
+            Long sectorId,
             LocalDate fechaInicio,
             LocalDate fechaFin
     );

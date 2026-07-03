@@ -172,7 +172,7 @@ public class AsistenciaReportController {
             parametros.put("EMPLEADO_NOMBRE", nombreCompletoGlobal);
             parametros.put("empleado_nombre", nombreCompletoGlobal);
             parametros.put("empleadoNombre", nombreCompletoGlobal);
-            
+
             // 5. LLENAMOS EL PDF NATIVO EN MEMORIA
             // 🚀 El 'false' le dice a Jasper: "Buscá la clave exacta del mapa, no uses getters de Java"
             JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(filasReporte, false);

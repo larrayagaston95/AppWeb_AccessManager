@@ -42,3 +42,45 @@ footer {
     background-color: #0b0f19;
     border-top: 1px solid #1e293b;
 }
+
+
+/* =========================================================================
+   🎯 PERSONALIZACIÓN OSCURA PARA BUSCADORES SELECT2
+   ========================================================================= */
+.select2-container--default .select2-selection--single {
+    background-color: #212529 !important;
+    border-color: #495057 !important;
+    color: white !important;
+    height: 38px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: white !important;
+    line-height: 35px !important;
+}
+
+/* Fondo del desplegable de opciones */
+.select2-dropdown {
+    background-color: #212529 !important;
+    border-color: #495057 !important;
+    color: white !important;
+}
+
+/* Caja de texto del buscador interno */
+.select2-search__field {
+    background-color: #1a1d20 !important;
+    border-color: #495057 !important;
+    color: white !important;
+}
+
+/* Color del texto de las opciones al pasar el mouse */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0dcaf0 !important; /* Color info/turquesa tuyo */
+    color: #000 !important;
+}
+
+/* Color de la opción seleccionada en la lista */
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: #2c3034 !important;
+    color: white !important;
+}

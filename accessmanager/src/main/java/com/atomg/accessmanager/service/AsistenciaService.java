@@ -80,8 +80,9 @@ public class AsistenciaService {
             double horasTrabajadas = duracion.toMinutes() / 60.0;
             reporte.setHorasTrabajadas(Math.round(horasTrabajadas * 100.0) / 100.0);
 
-//            double jornadaBase = emp.getHorasJornadaBase();
-            double jornadaBase = 8.0; // Hardcodeado temporalmente en 8 horas
+            // 🎯 DESHARDCODEADO: Ahora toma las horas configuradas por empleado en la Base de Datos
+            double jornadaBase = emp.getHorasJornadaBase() != null ? emp.getHorasJornadaBase().doubleValue() : 8.0;
+
             if (horasTrabajadas > jornadaBase) {
                 double extras = horasTrabajadas - Math.round(jornadaBase);
                 reporte.setHorasExtras(Math.round(extras * 100.0) / 100.0);
@@ -99,24 +100,27 @@ public class AsistenciaService {
     /**
      * Recupera el reporte mensual de un empleado desde la base de datos
      */
+    /**
+     * Recupera el reporte mensual de un empleado desde la base de datos
+     */
     public List<ReporteAsistencia> obtenerReporteMensual(String legajo, int anio, int mes) {
         LocalDate inicio = LocalDate.of(anio, mes, 1);
         LocalDate fin = inicio.plusMonths(1).minusDays(1);
-        return reporteAsistenciaRepository.findByEmpleadoLegajoRelojAndFechaBetweenOrderByFechaAsc(legajo, inicio, fin);
+
+        // 🚀 REEMPLAZÁ TU LÍNEA 109 POR ESTA CON EL MÉTODO NUEVO:
+        return reporteAsistenciaRepository.buscarReporteIndividual(legajo, inicio, fin);
     }
 
     /**
-     * Recupera el reporte mensual masivo filtrado por Empresa (Cliente), Sucursal y Sector
+     * 🛠️ REPARADO: Recupera el reporte masivo usando la nueva Query de JpaRepository
      */
-    public List<ReporteAsistencia> obtenerReporteMensualMasivo(Long empresaId, String sucursal, Long sectorId, int anio, int mes) {
+    public List<ReporteAsistencia> obtenerReporteMensualMasivo(Long empresaId, Long sucursalId, Long sectorId, int anio, int mes) {
         LocalDate fechaInicio = LocalDate.of(anio, mes, 1);
         LocalDate fechaFin = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
 
-        return reporteAsistenciaRepository.findByEmpleadoEmpresaIdAndEmpleadoSucursalAndEmpleadoSectorIdAndFechaBetweenOrderByEmpleadoLegajoRelojAscFechaAsc(
-                empresaId, sucursal, sectorId, fechaInicio, fechaFin
+        // 🚀 LLAMADA CORREGIDA: Invoca al nuevo método optimizado con @Query pasándole IDs numéricos
+        return reporteAsistenciaRepository.buscarReportesMasivos(
+                empresaId, sucursalId, sectorId, fechaInicio, fechaFin
         );
     }
-
-
-
 }

@@ -100,14 +100,14 @@ public class AsistenciaReportController {
     @GetMapping("/asistencia-masiva")
     public ResponseEntity<byte[]> descargarReporteAsistenciaMasiva(
             @RequestParam Long empresaId,
-            @RequestParam String sucursal,
+            @RequestParam Long sucursalId,
             @RequestParam Long sectorId,
             @RequestParam int anio,
             @RequestParam int mes) {
 
         try {
             // 1. OBTENEMOS LA DATA MASIVA REAL FILTRADA POR RELACIONES (IDs)
-            List<ReporteAsistencia> listadoReal = asistenciaService.obtenerReporteMensualMasivo(empresaId, sucursal, sectorId, anio, mes);
+            List<ReporteAsistencia> listadoReal = asistenciaService.obtenerReporteMensualMasivo(empresaId, sucursalId, sectorId, anio, mes);
 
             // Si no hay datos para ese filtro, evitamos que rompa cortando acá
             if (listadoReal.isEmpty()) {
@@ -120,7 +120,10 @@ public class AsistenciaReportController {
             DateTimeFormatter fechaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             // Tomamos los nombres de texto reales de la base para pasárselos a Jasper como parámetros globales
-            String nombreEmpresaReal = listadoReal.get(0).getEmpleado().getEmpresa().getNombre();
+// Línea 123 corregida navegando por la nueva jerarquía: Empleado -> Sector -> Sucursal -> Empresa
+            String nombreEmpresaReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getEmpresa().getNombre();
+
+// Línea 124 (Esta ya queda bien porque va directo al sector)
             String nombreSectorReal = listadoReal.get(0).getEmpleado().getSector().getNombre();
 
             for (ReporteAsistencia registro : listadoReal) {
@@ -164,7 +167,7 @@ public class AsistenciaReportController {
                     (listadoReal.get(0).getEmpleado().getNombre() + " " + listadoReal.get(0).getEmpleado().getApellido()) : "Empleado";
 
             Map<String, Object> parametros = new HashMap<>();
-            parametros.put("SUCURSAL", sucursal);
+            parametros.put("SUCURSAL", sucursalId);
             parametros.put("SECCION", nombreSectorReal);
             parametros.put("PERIODO", periodo);
 

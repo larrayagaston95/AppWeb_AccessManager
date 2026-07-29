@@ -41,13 +41,25 @@ export async function fetchSucursales(empresaId = 1) {
 /**
  * Trae los sectores filtrados por el nombre de la sucursal
  */
-export async function fetchSectoresPorSucursal(sucursalNombre) {
-    const token = localStorage.getItem('access_token_am');
-    const response = await fetch(`http://localhost:8080/api/sectores?sucursal=${encodeURIComponent(sucursalNombre)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Error al traer sectores');
-    return await response.json();
+// En tu apiService.js
+
+export async function fetchSectoresPorSucursal(sucursal) {
+    try {
+        // 🚀 Si tu backend espera /api/sectores?sucursal=Planta Central o ID:
+        const response = await fetch(`/api/sectores?sucursal=${encodeURIComponent(sucursal)}`);
+
+        // (O si tu backend usa PathVariable tipo /api/sectores/sucursal/1, usá esta opción):
+        // const response = await fetch(`/api/sectores/sucursal/${encodeURIComponent(sucursal)}`);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error en fetchSectoresPorSucursal:", error);
+        return [];
+    }
 }
 
 /**

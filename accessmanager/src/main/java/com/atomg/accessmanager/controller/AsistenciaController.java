@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/asistencia")
@@ -20,21 +22,28 @@ public class AsistenciaController {
     // Seteamos la clave maestra del sistema (Hardcodeada temporalmente para el MVP rápido)
     private static final String SECURITY_TOKEN = "AtomgAccess2026";
 
-    @GetMapping("/reporte-mensual")
-    public ResponseEntity<?> getReporteMensual(
-            @RequestHeader(value = "X-Access-Token", required = false) String token,
+    @GetMapping("/reporte-mensual") // o /mensual según la ruta exacta que tengas en tu controller
+    public ResponseEntity<?> obtenerReporteMensual(
             @RequestParam String legajo,
             @RequestParam int anio,
             @RequestParam int mes) {
 
-        // VALIDACIÓN DE SEGURIDAD
-        if (token == null || !token.equals(SECURITY_TOKEN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Acceso denegado: Token inválido o ausente.");
-        }
+        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(legajo, anio, mes);
 
-        List<ReporteAsistencia> reporte = asistenciaService.obtenerReporteMensual(legajo, anio, mes);
-        return ResponseEntity.ok(reporte);
+        // Convertimos la lista de entidades a un mapa plano seguro para Jackson
+        List<Map<String, Object>> respuestaLimpia = reportes.stream().map(rep -> {
+            Map<String, Object> fila = new HashMap<>();
+            fila.put("id", rep.getId());
+            fila.put("fecha", rep.getFecha() != null ? rep.getFecha().toString() : "");
+            fila.put("entrada", rep.getEntrada() != null ? rep.getEntrada().toString() : "");
+            fila.put("salida", rep.getSalida() != null ? rep.getSalida().toString() : "");
+            fila.put("horasTrabajadas", rep.getHorasTrabajadas());
+            fila.put("horasExtras", rep.getHorasExtras());
+            fila.put("observaciones", rep.getObservaciones());
+            return fila;
+        }).toList();
+
+        return ResponseEntity.ok(respuestaLimpia);
     }
 
     // ... Mantené el endpoint /procesar-dia tal cual estaba abajo

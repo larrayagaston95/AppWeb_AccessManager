@@ -65,6 +65,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Endpoints publicos
                 .requestMatchers("/api/auth/login").permitAll()
+                // ZKTeco Hardware Integration ADMS
+                .requestMatchers("/iclock/**").permitAll()
                 // Preflight OPTIONS: siempre permitir sin token
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Panel SuperAdmin: solo ROLE_SUPERADMIN

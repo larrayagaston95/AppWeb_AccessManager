@@ -13,6 +13,9 @@ public class Fichada {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "idEmpresa", nullable = false)
+    private Long idEmpresa;
+
     @Column(name = "legajo_reloj", nullable = false)
     private String legajoReloj;
 

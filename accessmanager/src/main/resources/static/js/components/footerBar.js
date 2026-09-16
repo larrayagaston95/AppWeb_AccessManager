@@ -6,10 +6,10 @@ export function renderFooter() {
     const anioActual = new Date().getFullYear();
 
     footerContainer.innerHTML = `
-        <div class="container-fluid text-center py-3 text-muted small">
-            <span>&copy; ${anioActual} <strong>VoltechDevs</strong>. Todos los derechos reservados.</span>
-            <span class="mx-2">|</span>
-            <span class="text-turquoise">AccessManager v1.0</span>
+        <div class="container-fluid text-center py-3 text-white-50 small">
+            <span>&copy; ${anioActual} <strong class="text-light">FluxTech</strong>. Todos los derechos reservados.</span>
+            <span class="mx-2 text-white-50">|</span>
+            <span class="text-turquoise fw-semibold">AccessManager v1.0</span>
         </div>
     `;
 }

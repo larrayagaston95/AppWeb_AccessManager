@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.11.0.final using JasperReports Library version 6.11.0-0c4056ccaa4d25a5a8c45672d2f764ea3498bebb  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reporte_asistencia" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="bc8d16af-6342-49da-9da8-ecf36616428c">
+	<parameter name="EMPRESA_NOMBRE" class="java.lang.String"/>
 	<parameter name="EMPLEADO_NOMBRE" class="java.lang.String"/>
 	<parameter name="SUCURSAL" class="java.lang.String"/>
 	<parameter name="SECCION" class="java.lang.String"/>
 	<parameter name="PERIODO" class="java.lang.String"/>
+	<parameter name="LOGO_PATH" class="java.awt.Image"/>
 	<field name="fecha" class="java.lang.String"/>
 	<field name="entrada" class="java.lang.String"/>
 	<field name="salida" class="java.lang.String"/>
@@ -20,13 +22,13 @@
 				</textElement>
 				<text><![CDATA[FLUXTECH ACCESSMANAGER]]></text>
 			</staticText>
-			<staticText>
+			<textField>
 				<reportElement x="0" y="20" width="280" height="15" forecolor="#444444" uuid="e9104b2b-11bc-40de-a5d6-319efda74610"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="Arial" size="9" isBold="true"/>
 				</textElement>
-				<text><![CDATA[EMPRESA: COOPERATIVA CENTRAL]]></text>
-			</staticText>
+				<textFieldExpression><![CDATA["EMPRESA: " + ($P{EMPRESA_NOMBRE} != null ? $P{EMPRESA_NOMBRE} : "")]]></textFieldExpression>
+			</textField>
 			<staticText>
 				<reportElement x="380" y="0" width="175" height="15" uuid="104dafc8-47bc-49da-a4bc-12f3cb0f741c"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -227,7 +229,7 @@
 				<box>
 					<bottomPen lineWidth="0.25" lineColor="#CCCCCC"/>
 				</box>
-				<textElement verticalAlignment="Middle">
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="Arial" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{estado}]]></textFieldExpression>

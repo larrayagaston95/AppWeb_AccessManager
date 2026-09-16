@@ -26,6 +26,16 @@ public class Empleado {
     @Column(nullable = true)
     private String telefono;
 
+    /**
+     * Columna legacy de la tabla: almacena el nombre de la sucursal como texto.
+     * Se rellena automáticamente en el servicio a partir del Sector elegido.
+     */
+    @Column(name = "sucursal", nullable = false)
+    private String sucursal;
+
+    @Column(name = "empresa_id", nullable = false)
+    private Long empresaId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sector_id", nullable = false)
     private Sector sector;

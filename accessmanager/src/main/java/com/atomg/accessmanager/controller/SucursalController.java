@@ -5,6 +5,7 @@ import com.atomg.accessmanager.repository.SucursalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,11 @@ public class SucursalController {
     private SucursalRepository sucursalRepository;
 
     @GetMapping
-    public ResponseEntity<?> listarPorEmpresa(@RequestParam(name = "empresaId", defaultValue = "1") Long empresaId) {
+    public ResponseEntity<?> listarPorEmpresa(HttpServletRequest request) {
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
+        }
         List<Sucursal> sucursales = sucursalRepository.findByEmpresaId(empresaId);
 
         // .toList() directo al final le dice a Java el tipo exacto sin dar vueltas

@@ -22,6 +22,9 @@ public class AsistenciaController {
     // Seteamos la clave maestra del sistema (Hardcodeada temporalmente para el MVP rápido)
     private static final String SECURITY_TOKEN = "AtomgAccess2026";
 
+    @Autowired
+    private com.atomg.accessmanager.service.EmpleadoService empleadoService;
+
     @GetMapping("/reporte-mensual") // o /mensual según la ruta exacta que tengas en tu controller
     public ResponseEntity<?> obtenerReporteMensual(
             @RequestParam String legajo,
@@ -40,6 +43,44 @@ public class AsistenciaController {
             fila.put("horasTrabajadas", rep.getHorasTrabajadas());
             fila.put("horasExtras", rep.getHorasExtras());
             fila.put("observaciones", rep.getObservaciones());
+            return fila;
+        }).toList();
+
+        return ResponseEntity.ok(respuestaLimpia);
+    }
+
+    @GetMapping("/detalle")
+    public ResponseEntity<?> obtenerDetalleAsistencia(
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestParam String legajo,
+            @RequestParam int anio,
+            @RequestParam int mes) {
+        
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Valida multi-tenant buscando el legajo dentro de la empresa
+        com.atomg.accessmanager.model.Empleado emp = empleadoService.obtenerTodos(empresaId).stream()
+                .filter(e -> legajo.equals(e.getLegajoReloj()))
+                .findFirst()
+                .orElse(null);
+
+        if (emp == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado o empleado no existe.");
+        }
+
+        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(emp.getLegajoReloj(), anio, mes);
+
+        List<Map<String, Object>> respuestaLimpia = reportes.stream().map(rep -> {
+            Map<String, Object> fila = new HashMap<>();
+            fila.put("fecha", rep.getFecha() != null ? rep.getFecha().toString() : "");
+            fila.put("hora_entrada", rep.getEntrada() != null ? rep.getEntrada().toString() : "");
+            fila.put("hora_salida", rep.getSalida() != null ? rep.getSalida().toString() : "");
+            fila.put("horas_trabajadas", rep.getHorasTrabajadas());
+            fila.put("horas_extras", rep.getHorasExtras());
+            fila.put("estado", rep.getObservaciones());
             return fila;
         }).toList();
 

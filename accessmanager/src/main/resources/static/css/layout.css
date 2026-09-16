@@ -1,4 +1,4 @@
-/* Configuración Base y Paleta Oscura */
+﻿/* Configuración Base y Paleta Oscura */
 body {
     background-color: #0f172a;
     color: #f8fafc;
@@ -15,6 +15,17 @@ body {
 /* Color Identitario de la Marca */
 .text-turquoise {
     color: #0db5b5;
+}
+
+.btn-turquoise {
+    background-color: #0db5b5;
+    color: #ffffff;
+    border: none;
+    transition: all 0.2s ease-in-out;
+}
+.btn-turquoise:hover {
+    background-color: #0aa2a2;
+    color: #ffffff;
 }
 
 /* Estilos de Tabla Premium */
@@ -83,4 +94,137 @@ footer {
 .select2-container--default .select2-results__option[aria-selected=true] {
     background-color: #2c3034 !important;
     color: white !important;
+}
+
+/* =============================================================================
+   MÓDULO 1 — DASHBOARD EN TIEMPO REAL
+   Tarjetas KPI con colores semánticos, hover premium y skeleton loader
+   ============================================================================= */
+
+/* Base de la tarjeta de Dashboard */
+.card-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.card-dashboard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Acento de color lateral izquierdo */
+.card-dashboard::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 16px 0 0 16px;
+}
+
+/* Ícono grande */
+.card-dashboard__icon {
+    font-size: 2.8rem;
+    line-height: 1;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+/* Contenido textual */
+.card-dashboard__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-dashboard__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    margin-bottom: 0.2rem;
+}
+
+.card-dashboard__value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.card-dashboard__sub {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* ── Variante AZUL (Total Personal) ── */
+.card-dashboard--blue::before  { background: #3b82f6; }
+.card-dashboard--blue:hover    { border-color: #3b82f6; }
+.card-dashboard--blue .card-dashboard__icon  { color: #3b82f6; }
+.card-dashboard--blue .card-dashboard__value { color: #93c5fd; }
+
+/* ── Variante VERDE (Presentes) ── */
+.card-dashboard--green::before  { background: #22c55e; }
+.card-dashboard--green:hover    { border-color: #22c55e; }
+.card-dashboard--green .card-dashboard__icon  { color: #22c55e; }
+.card-dashboard--green .card-dashboard__value { color: #86efac; }
+
+/* ── Variante ROJA (Ausentes) ── */
+.card-dashboard--red::before  { background: #ef4444; }
+.card-dashboard--red:hover    { border-color: #ef4444; }
+.card-dashboard--red .card-dashboard__icon  { color: #ef4444; }
+.card-dashboard--red .card-dashboard__value { color: #fca5a5; }
+
+/* ── Variante AMARILLA (Llegadas Tarde) ── */
+.card-dashboard--yellow::before  { background: #f59e0b; }
+.card-dashboard--yellow:hover    { border-color: #f59e0b; }
+.card-dashboard--yellow .card-dashboard__icon  { color: #f59e0b; }
+.card-dashboard--yellow .card-dashboard__value { color: #fde68a; }
+
+/* ── SKELETON LOADER (mientras cargan los datos) ── */
+.skeleton-card {
+    pointer-events: none;
+}
+
+.skeleton-icon,
+.skeleton-line {
+    background: linear-gradient(90deg, #1e293b 25%, #273548 50%, #1e293b 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+}
+
+.skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.skeleton-line {
+    height: 14px;
+    display: block;
+}
+
+.w-25 { width: 25% !important; }
+.w-50 { width: 50% !important; }
+.w-75 { width: 75% !important; }
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Fondo de tarjeta oscura usada en el acceso rápido */
+.bg-dark-card {
+    background-color: #1e293b;
 }

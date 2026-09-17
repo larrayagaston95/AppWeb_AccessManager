@@ -67,6 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login").permitAll()
                 // ZKTeco Hardware Integration ADMS
                 .requestMatchers("/iclock/**").permitAll()
+                // Hikvision Hardware Integration ISAPI
+                .requestMatchers("/api/hardware/hikvision/**").permitAll()
                 // Preflight OPTIONS: siempre permitir sin token
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Panel SuperAdmin: solo ROLE_SUPERADMIN

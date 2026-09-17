@@ -14,4 +14,7 @@ public class Empresa {
 
     @Column(nullable = false, unique = true)
     private String nombre;
+
+    @Column(name = "api_token")
+    private String apiToken;
 }

@@ -7,10 +7,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface FichadaRepository extends JpaRepository<Fichada, Long> {
+
+    List<Fichada> findByLegajoRelojAndFechaHoraBetweenOrderByFechaHoraAsc(String legajoReloj, LocalDateTime inicio, LocalDateTime fin);
 
     // =========================================================================
     // DASHBOARD - Fichadas del dia actual

@@ -69,6 +69,10 @@ public class SecurityConfig {
                 .requestMatchers("/iclock/**").permitAll()
                 // Hikvision Hardware Integration ISAPI
                 .requestMatchers("/api/hardware/hikvision/**").permitAll()
+                // Endpoint de prueba de calculo
+                .requestMatchers("/api/calculo/**").permitAll()
+                // Reportes (abierto temporalmente para el frontend)
+                .requestMatchers("/api/reportes/**").permitAll()
                 // Preflight OPTIONS: siempre permitir sin token
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Panel SuperAdmin: solo ROLE_SUPERADMIN

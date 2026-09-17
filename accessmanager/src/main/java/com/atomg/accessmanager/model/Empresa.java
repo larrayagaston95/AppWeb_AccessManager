@@ -17,4 +17,7 @@ public class Empresa {
 
     @Column(name = "api_token")
     private String apiToken;
+
+    @Column(name = "modelo_asistencia")
+    private String modeloAsistencia = "AUTOMATICO";
 }

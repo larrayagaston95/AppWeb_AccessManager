@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api/v1/asistencia';
+const BASE_URL = '/api/v1/asistencia';
 
 // ── 1. Helper para los headers ────────────────────────────────────────────────
 function authHeaders() {
@@ -50,7 +50,7 @@ export async function fetchDetalleAsistencia(legajo, anio, mes) {
  */
 export async function fetchSucursales() {
     const response = await fetch(
-        `http://localhost:8080/api/sucursales`,
+        `/api/sucursales`,
         { headers: authHeaders() }
     );
     return handleResponse(response);
@@ -64,7 +64,7 @@ export async function fetchSucursales() {
 export async function fetchSectoresPorSucursal(sucursalId) {
     try {
         const response = await fetch(
-            `http://localhost:8080/api/sectores?sucursalId=${sucursalId}`,
+            `/api/sectores?sucursalId=${sucursalId}`,
             { headers: authHeaders() }
         );
         return await handleResponse(response);
@@ -83,7 +83,7 @@ export async function fetchSectoresPorSucursal(sucursalId) {
 export async function fetchEmpleadosPorSector(sectorId) {
     try {
         const response = await fetch(
-            `http://localhost:8080/api/empleados?sectorId=${sectorId}`,
+            `/api/empleados?sectorId=${sectorId}`,
             { headers: authHeaders() }
         );
         return await handleResponse(response);
@@ -103,7 +103,7 @@ export async function fetchEmpleadosPorSector(sectorId) {
  */
 export async function fetchResumenSector(sectorId, anio, mes) {
     try {
-        const url = `http://localhost:8080/api/sectores/resumen?sectorId=${sectorId}&anio=${anio}&mes=${mes}`;
+        const url = `/api/sectores/resumen?sectorId=${sectorId}&anio=${anio}&mes=${mes}`;
         const response = await fetch(url, { headers: authHeaders() });
         return await handleResponse(response);
     } catch (error) {

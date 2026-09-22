@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api/v1/asistencia';
+const BASE_URL = '/api/v1/asistencia';
 
 /**
  * Realiza la petición HTTP GET al backend para traer las asistencias.

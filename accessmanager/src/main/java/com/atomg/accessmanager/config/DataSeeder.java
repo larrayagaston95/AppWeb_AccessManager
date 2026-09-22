@@ -25,9 +25,8 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Sembrar usuario admin si no existe
-        Optional<Usuario> adminOpt = usuarioRepository.findByUsername("admin");
-        if (adminOpt.isEmpty()) {
+        // Sembrar usuario admin si la tabla esta vacia
+        if (usuarioRepository.count() == 0) {
             Empresa emp1 = new Empresa();
             emp1.setNombre("Cooperativa Test");
             try {

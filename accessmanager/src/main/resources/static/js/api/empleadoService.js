@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api/empleados';
+const BASE_URL = '/api/empleados';
 
 function authHeaders() {
     const token = localStorage.getItem('access_token_am');

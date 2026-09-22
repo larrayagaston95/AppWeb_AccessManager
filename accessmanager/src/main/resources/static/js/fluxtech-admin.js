@@ -4,7 +4,7 @@
  * Gestiona: Alta de Clientes, Sucursales y Sectores.
  */
 
-const BASE = 'http://localhost:8080/api/superadmin';
+const BASE = '/api/superadmin';
 
 document.addEventListener('DOMContentLoaded', async () => {
 

@@ -1,10 +1,10 @@
-ï»¿/**
+/**
  * dashboardService.js
  * Servicio para consumir el endpoint GET /api/dashboard/resumen
- * Importa los helpers de autenticaciÃ³n de apiService para reutilizar headers y manejo de errores.
+ * Importa los helpers de autenticación de apiService para reutilizar headers y manejo de errores.
  */
 
-const DASHBOARD_BASE = 'http://localhost:8080/api/dashboard';
+const DASHBOARD_BASE = '/api/dashboard';
 
 function authHeaders() {
     const token = localStorage.getItem('access_token_am');
@@ -23,7 +23,7 @@ async function handleDashboardResponse(response) {
 }
 
 /**
- * Obtiene el resumen de asistencia del dÃ­a actual.
+ * Obtiene el resumen de asistencia del día actual.
  * @param {number|null} sucursalId - ID de la sucursal a filtrar, o null para toda la empresa.
  * @returns {Promise<{totalEmpleados, presentes, ausentes, llegadasTarde}>}
  */

@@ -1,4 +1,4 @@
-﻿import { fetchReporteMensual, fetchResumenSector, fetchDetalleAsistencia } from './api/apiService.js';
+import { fetchReporteMensual, fetchResumenSector, fetchDetalleAsistencia } from './api/apiService.js';
 import { initDashboard } from './components/dashboardUI.js';
 import { renderHeader }        from './components/headerNav.js';
 import { renderFooter }        from './components/footerBar.js';
@@ -8,18 +8,18 @@ import { inicializarCombosInteligentes } from './components/filtrosHandler.js';
 import { exportarIndividual, exportarMasivo } from './services/reporteService.js';
 import { initEmpleadosUI } from './components/empleadosUI.js';
 
-// ── Nodos de pantalla ────────────────────────────────────────────────────────
+// -- Nodos de pantalla --------------------------------------------------------
 const vistaApp   = document.getElementById('vistaApp');
 const vistaPanel = document.getElementById('vistaPanel');
 
-// Mapa de texto de mes → número
+// Mapa de texto de mes ? n�mero
 const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
 
 // ============================================================================
-// 1. INICIALIZACIÓN DE ESTRUCTURA UI (UNA SOLA VEZ por sesión)
+// 1. INICIALIZACI�N DE ESTRUCTURA UI (UNA SOLA VEZ por sesi�n)
 // ============================================================================
 async function inicializarEstructuraUI() {
     renderHeader(ejecutarCierreSesion);
@@ -28,15 +28,15 @@ async function inicializarEstructuraUI() {
     vincularNavegacionSPA();
     await inicializarCombosInteligentes();
     await initEmpleadosUI();
-    await initDashboard();       // Módulo 1: Dashboard en tiempo real
+    await initDashboard();       // M�dulo 1: Dashboard en tiempo real
     actualizarFechaDashboard();  // Muestra la fecha de hoy en el encabezado
 }
 
 /**
- * Conecta los tabs de navegación principal
+ * Conecta los tabs de navegaci�n principal
  */
 /**
- * Helpers de navegación SPA: activa un tab y desactiva los demás.
+ * Helpers de navegaci�n SPA: activa un tab y desactiva los dem�s.
  */
 function setTabActivo(idTab) {
     ['navDashboard', 'navAsistencia', 'navPersonal'].forEach(id => {
@@ -97,8 +97,8 @@ function vincularNavegacionSPA() {
 }
 
 /**
- * Conecta el botón #btnFiltrar del header dinámico.
- * Se llama después de renderHeader() con flag anti-duplicado.
+ * Conecta el bot�n #btnFiltrar del header din�mico.
+ * Se llama despu�s de renderHeader() con flag anti-duplicado.
  */
 function vincularBtnFiltrarHeader() {
     const btn = document.getElementById('btnFiltrar');
@@ -127,27 +127,27 @@ function leerFiltros() {
 }
 
 // ============================================================================
-// 3. ACTUALIZAR PANEL — Lógica dual:
-//    - Con legajo → Modo Individual (fichadas diarias)
-//    - Sin legajo → Modo Sector     (resumen consolidado)
+// 3. ACTUALIZAR PANEL � L�gica dual:
+//    - Con legajo ? Modo Individual (fichadas diarias)
+//    - Sin legajo ? Modo Sector     (resumen consolidado)
 // ============================================================================
 async function actualizarPanel() {
     const { legajo, sectorId, anio, mesNumero } = leerFiltros();
 
-    // Determinamos el modo según si hay empleado seleccionado
+    // Determinamos el modo seg�n si hay empleado seleccionado
     const modoIndividual = legajo !== '';
 
     if (!modoIndividual && !sectorId) {
-        alert('Por favor seleccione al menos una Sección para consultar el resumen del sector.');
+        alert('Por favor seleccione al menos una Secci�n para consultar el resumen del sector.');
         return;
     }
 
-    // Aseguramos que el panel general esté visible
+    // Aseguramos que el panel general est� visible
     vistaApp.classList.remove('d-none');
 
     try {
         if (modoIndividual) {
-            // ── MODO INDIVIDUAL ──────────────────────────────────────────────
+            // -- MODO INDIVIDUAL ----------------------------------------------
             const data = await fetchDetalleAsistencia(legajo, anio, mesNumero);
 
             let totalHoras  = 0;
@@ -161,7 +161,7 @@ async function actualizarPanel() {
             renderizarTablaAsistencia(data);
 
         } else {
-            // ── MODO SECTOR (resumen consolidado) ────────────────────────────
+            // -- MODO SECTOR (resumen consolidado) ----------------------------
             const data = await fetchResumenSector(sectorId, anio, mesNumero);
 
             // KPIs del sector: sumamos totales de todos los empleados
@@ -177,14 +177,14 @@ async function actualizarPanel() {
         if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN') {
             ejecutarCierreSesion();
         } else {
-            console.error('❌ Error en AccessManager:', error);
-            alert('No se pudo establecer comunicación con el servidor.');
+            console.error('? Error en AccessManager:', error);
+            alert('No se pudo establecer comunicaci�n con el servidor.');
         }
     }
 }
 
 // ============================================================================
-// 4. CIERRE DE SESIÓN
+// 4. CIERRE DE SESI�N
 // ============================================================================
 function ejecutarCierreSesion() {
     localStorage.removeItem('access_token_am');
@@ -195,16 +195,16 @@ function ejecutarCierreSesion() {
 }
 
 // ============================================================================
-// 5. EVENTOS DEL DOM ESTÁTICO (elementos en index.html)
+// 5. EVENTOS DEL DOM EST�TICO (elementos en index.html)
 // ============================================================================
 
-// Botón Exportar PDF Individual
+// Bot�n Exportar PDF Individual
 const btnExportarIndividual = document.getElementById('btnExportarIndividual');
 if (btnExportarIndividual) {
     btnExportarIndividual.addEventListener('click', exportarIndividual);
 }
 
-// Botón Reporte Masivo — pasa año y mes en el momento del clic
+// Bot�n Reporte Masivo � pasa a�o y mes en el momento del clic
 const btnReporteMasivo = document.getElementById('btnReporteMasivo');
 if (btnReporteMasivo) {
     btnReporteMasivo.addEventListener('click', () => {
@@ -214,7 +214,7 @@ if (btnReporteMasivo) {
 }
 
 // ============================================================================
-// 6. ARRANQUE AUTOMÁTICO si ya hay token (recarga de página)
+// 6. ARRANQUE AUTOM�TICO si ya hay token (recarga de p�gina)
 // ============================================================================
 /**
  * Muestra la fecha de hoy en el encabezado del Dashboard.
@@ -237,16 +237,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         mostrarVista('vistaDashboard');
         setTabActivo('navDashboard');
 
-        // Botón 'Ver Asistencia' dentro del Dashboard
+        // Bot�n 'Ver Asistencia' dentro del Dashboard
         document.getElementById('btnIrAsistencia')?.addEventListener('click', () => {
             setTabActivo('navAsistencia');
             mostrarVista('vistaPanel');
         });
 
-        // Botón Refresh manual del Dashboard
+        // Bot�n Refresh manual del Dashboard
         document.getElementById('btnRefreshDashboard')?.addEventListener('click', () => {
             const sucursalId = document.getElementById('filtroDashboardSucursal')?.value;
-            // Re-dispara el change event para reutilizar la lógica del listener
+            // Re-dispara el change event para reutilizar la l�gica del listener
             const select = document.getElementById('filtroDashboardSucursal');
             if (select) select.dispatchEvent(new Event('change'));
         });

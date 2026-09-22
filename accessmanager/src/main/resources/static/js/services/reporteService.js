@@ -32,7 +32,7 @@ export async function exportarIndividual() {
 
     const mesNumero = mapaMeses[mesTexto] || 6;
 
-    const url = `http://localhost:8080/api/reportes/asistencia`
+    const url = `/api/reportes/asistencia`
         + `?legajo=${encodeURIComponent(legajo)}`
         + `&anio=${anio}`
         + `&mes=${mesNumero}`
@@ -83,7 +83,7 @@ export async function exportarMasivo(anioParam, mesParam) {
     const mesTexto = selectMes ? selectMes.value : 'Junio';
     const mesNumero = mesParam ?? mapaMeses[mesTexto] ?? 6;
 
-    const url = `http://localhost:8080/api/reportes/asistencia-masiva`
+    const url = `/api/reportes/asistencia-masiva`
         + `?sucursalId=${encodeURIComponent(sucursalId)}`
         + `&sectorId=${encodeURIComponent(sectorId)}`
         + `&anio=${anio}`

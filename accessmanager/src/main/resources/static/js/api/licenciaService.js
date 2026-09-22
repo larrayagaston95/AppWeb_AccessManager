@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api/licencias';
+const BASE_URL = '/api/licencias';
 
 function getHeaders() {
     return {

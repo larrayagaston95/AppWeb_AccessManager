@@ -1,6 +1,6 @@
-Ôªø/**
+/**
  * Renderiza el encabezado institucional con la barra de filtros.
- * Los <select> de Sucursal, Secci√≥n y Empleado arrancan VAC√çOS;
+ * Los <select> de Sucursal, SecciÛn y Empleado arrancan VACÕOS;
  * su contenido real lo inyecta inicializarCombosInteligentes().
  *
  * @param {Function} onSalirCallback - Se ejecuta al presionar "Salir".
@@ -14,13 +14,13 @@ export function renderHeader(onSalirCallback) {
         <nav class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
             <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
 
-                <!-- T√≠tulo principal de la plataforma -->
+                <!-- TÌtulo principal de la plataforma -->
                 <div class="d-flex align-items-center">
                     <span class="navbar-brand mb-0 h1 fs-4 fw-bold text-turquoise me-4">
                         <i class="bi bi-shield-lock-fill me-2"></i>AccessManager
                     </span>
                     
-                    <!-- Men√∫ de Navegaci√≥n SPA -->
+                    <!-- Men˙ de NavegaciÛn SPA -->
                     <ul class="nav nav-pills d-none d-md-flex" id="mainNavigation">
                         <li class="nav-item">
                             <a class="nav-link active px-3 py-1 fw-bold" id="navDashboard" href="#" style="border-radius: 20px;">
@@ -68,16 +68,16 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- Filtro: Secci√≥n (se puebla seg√∫n la sucursal elegida) -->
+                    <!-- Filtro: SecciÛn (se puebla seg˙n la sucursal elegida) -->
                     <div class="col-6 col-sm-4 col-md-2">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
-                               style="font-size: 11px;">Secci√≥n</label>
+                               style="font-size: 11px;">SecciÛn</label>
                         <select id="selectSeccion" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Seleccione Secci√≥n --</option>
+                            <option value="">-- Seleccione SecciÛn --</option>
                         </select>
                     </div>
 
-                    <!-- Filtro: Empleado (se puebla seg√∫n la secci√≥n elegida) -->
+                    <!-- Filtro: Empleado (se puebla seg˙n la secciÛn elegida) -->
                     <div class="col-12 col-sm-4 col-md-3">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
                                style="font-size: 11px;">Empleado</label>
@@ -86,10 +86,10 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- Filtro: A√±o -->
+                    <!-- Filtro: AÒo -->
                     <div class="col-4 col-md-2">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
-                               style="font-size: 11px;">A√±o</label>
+                               style="font-size: 11px;">AÒo</label>
                         <select id="selectAnio" class="form-select bg-dark text-light border-secondary">
                             <option value="2026" selected>2026</option>
                             <option value="2025">2025</option>
@@ -117,10 +117,10 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- Bot√≥n Buscar -->
+                    <!-- BotÛn Buscar -->
                     <div class="col-4 col-md-1 d-grid">
                         <label class="form-label d-none d-md-block invisible mb-1"
-                               style="font-size: 11px;">Acci√≥n</label>
+                               style="font-size: 11px;">AcciÛn</label>
                         <button id="btnFiltrar" class="btn btn-turquoise fw-bold">
                             <i class="bi bi-search"></i>
                         </button>
@@ -131,7 +131,7 @@ export function renderHeader(onSalirCallback) {
         </div>
     `;
 
-    // Conectamos el bot√≥n Salir
+    // Conectamos el botÛn Salir
     const btnSalir = document.getElementById('btnSalir');
     if (btnSalir) {
         btnSalir.addEventListener('click', onSalirCallback);

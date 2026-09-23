@@ -93,6 +93,9 @@
                 <button id="btnReporteMasivo" class="btn btn-warning fw-bold px-4">
                     <i class="bi bi-files me-1"></i> Masivo
                 </button>
+                <button id="btnSubirOffline" class="btn btn-info fw-bold px-4 text-dark" data-bs-toggle="modal" data-bs-target="#modalSubirOffline">
+                    <i class="bi bi-upload me-1"></i> Subir Offline
+                </button>
             </div>
         </div>
 
@@ -276,6 +279,43 @@
                 <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-warning text-dark fw-bold" id="btnGuardarLicencia">
                     <i class="bi bi-save me-1"></i> Guardar Licencia
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL SUBIR OFFLINE                                                       -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalSubirOffline" tabindex="-1" aria-labelledby="modalSubirOfflineLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold text-info" id="modalSubirOfflineLabel">
+                    <i class="bi bi-upload me-2"></i>Cargar Fichadas Offline
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formSubirOffline">
+                    <div class="mb-3">
+                        <label class="form-label text-light small fw-bold">Sucursal *</label>
+                        <select id="offlineSucursal" name="sucursalId" class="form-select bg-dark text-light border-secondary" required>
+                            <option value="">-- Seleccione Sucursal --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-light small fw-bold">Archivo de Reloj (.txt, .dat) *</label>
+                        <input type="file" class="form-control bg-dark text-white border-secondary" id="offlineFile" name="file" accept=".txt,.dat" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top border-secondary">
+                <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formSubirOffline" class="btn btn-info text-dark fw-bold" id="btnProcesarOffline">
+                    <i class="bi bi-cloud-upload me-1"></i> Procesar Archivo
                 </button>
             </div>
         </div>

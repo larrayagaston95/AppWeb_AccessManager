@@ -255,3 +255,87 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
     }
 });
+
+// ============================================================================
+// 7. CARGA DE FICHADAS OFFLINE
+// ============================================================================
+const modalSubirOffline = document.getElementById('modalSubirOffline');
+const selectOfflineSucursal = document.getElementById('offlineSucursal');
+const formSubirOffline = document.getElementById('formSubirOffline');
+
+if (modalSubirOffline) {
+    modalSubirOffline.addEventListener('show.bs.modal', async () => {
+        if (selectOfflineSucursal && selectOfflineSucursal.options.length <= 1) {
+            try {
+                // fetchSucursales might be imported from apiService.js, if not it will fail
+                const { fetchSucursales } = await import('./api/apiService.js');
+                const sucursales = await fetchSucursales();
+                selectOfflineSucursal.innerHTML = '<option value=\"\">-- Seleccione Sucursal --</option>';
+                sucursales.forEach(suc => {
+                    const option = document.createElement('option');
+                    option.value = suc.id || suc.idsucursal;
+                    option.textContent = suc.nombre;
+                    selectOfflineSucursal.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando sucursales:', error);
+                alert('No se pudieron cargar las sucursales.');
+            }
+        }
+    });
+}
+
+if (formSubirOffline) {
+    formSubirOffline.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const sucursalSelect = document.getElementById('offlineSucursal');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const fileInput = document.getElementById('offlineFile');
+        const file = fileInput.files[0];
+
+        if (!sucursalId) {
+            alert('Por favor, seleccione una sucursal antes de subir el archivo.');
+            return;
+        }
+
+        if (!file) {
+            alert('Por favor seleccione un archivo.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('sucursalId', sucursalId);
+
+        const token = localStorage.getItem('access_token_am');
+        try {
+            const response = await fetch('/api/fichadas/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const text = await response.text();
+                alert(text || 'Archivo subido correctamente.');
+                
+                if (typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getInstance(modalSubirOffline);
+                    if (modal) modal.hide();
+                }
+                formSubirOffline.reset();
+            } else {
+                const errorText = await response.text();
+                alert('Error: ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error al subir el archivo:', error);
+            alert('Error de red al subir el archivo.');
+        }
+    });
+}
+
+

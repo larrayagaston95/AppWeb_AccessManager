@@ -24,4 +24,12 @@ public class Fichada {
 
     @Column(name = "modo_verificacion")
     private String modoVerificacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reloj_id", nullable = true)
+    private Reloj reloj;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sucursal_id", nullable = true)
+    private Sucursal sucursal;
 }

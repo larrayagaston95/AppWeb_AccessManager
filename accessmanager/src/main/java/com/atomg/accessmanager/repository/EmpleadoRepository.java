@@ -14,6 +14,8 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Long> {
     List<Empleado> findBySectorId(Long sectorId);
 
     Optional<Empleado> findByLegajoReloj(String legajoReloj);
+    
+    Optional<Empleado> findByLegajoRelojAndEmpresaId(String legajoReloj, Long empresaId);
 
     // =========================================================================
     // DASHBOARD - Conteo de empleados

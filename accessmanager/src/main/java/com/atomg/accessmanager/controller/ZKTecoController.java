@@ -13,6 +13,12 @@ public class ZKTecoController {
     @Autowired
     private HardwareSyncService hardwareSyncService;
 
+    @GetMapping(value = "/getrequest", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> getRequest(@RequestParam(value = "SN", required = false) String serialNumber) {
+        String command = hardwareSyncService.obtenerComandoPendiente(serialNumber);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(command);
+    }
+
     /**
      * Endpoint para recibir los fichajes desde los relojes ZKTeco (protocolo ADMS/Push).
      */

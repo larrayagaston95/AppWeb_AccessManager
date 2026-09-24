@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "empleados")
+@Table(name = "empleados", uniqueConstraints = {@UniqueConstraint(columnNames = {"legajo_reloj", "empresa_id"})})
 public class Empleado {
 
     @Id
@@ -17,7 +17,7 @@ public class Empleado {
     @Column(nullable = false)
     private String apellido;
 
-    @Column(name = "legajo_reloj", nullable = false, unique = true)
+    @Column(name = "legajo_reloj", nullable = false)
     private String legajoReloj;
 
     @Column(name = "horas_jornada_base", nullable = false)

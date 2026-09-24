@@ -137,3 +137,4 @@ export function renderHeader(onSalirCallback) {
         btnSalir.addEventListener('click', onSalirCallback);
     }
 }
+

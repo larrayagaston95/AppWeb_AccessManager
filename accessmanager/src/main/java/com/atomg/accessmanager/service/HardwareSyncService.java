@@ -1,9 +1,11 @@
 package com.atomg.accessmanager.service;
 
+import com.atomg.accessmanager.model.ComandoReloj;
 import com.atomg.accessmanager.model.Empleado;
 import com.atomg.accessmanager.model.Fichada;
 import com.atomg.accessmanager.model.Reloj;
 import com.atomg.accessmanager.model.Sucursal;
+import com.atomg.accessmanager.repository.ComandoRelojRepository;
 import com.atomg.accessmanager.repository.EmpleadoRepository;
 import com.atomg.accessmanager.repository.FichadaRepository;
 import com.atomg.accessmanager.repository.RelojRepository;
@@ -17,7 +19,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class HardwareSyncService {
@@ -34,6 +42,12 @@ public class HardwareSyncService {
     @Autowired
     private SucursalRepository sucursalRepository;
 
+    @Autowired
+    private ComandoRelojRepository comandoRelojRepository;
+
+    @Autowired
+    private AsistenciaService asistenciaService;
+
     public void procesarFichajesZKTeco(String serialNumber, String datosCrudos) {
         if (datosCrudos == null || datosCrudos.isBlank() || serialNumber == null) {
             return;
@@ -47,6 +61,9 @@ public class HardwareSyncService {
             return;
         }
         Reloj reloj = relojOpt.get();
+        reloj.setUltimaConexion(LocalDateTime.now());
+        relojRepository.save(reloj);
+
         Long empresaId = reloj.getEmpresa().getId();
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -65,6 +82,12 @@ public class HardwareSyncService {
                 System.out.println("-> Procesando fichaje: Empleado Legajo=" + pin + ", FechaHora=" + fechaHoraStr);
                 
                 try {
+                    Optional<Empleado> empOpt = empleadoRepository.findByLegajoRelojAndEmpresaId(pin, empresaId);
+                    if (empOpt.isEmpty()) {
+                        System.out.println("   [IGNORADO] Empleado con legajo " + pin + " no pertenece a la empresa " + empresaId);
+                        continue;
+                    }
+
                     LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr, formatter);
                     
                     Fichada fichada = new Fichada();
@@ -140,6 +163,12 @@ public class HardwareSyncService {
                 fechaHora = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             }
 
+            Optional<Empleado> empOpt = empleadoRepository.findByLegajoRelojAndEmpresaId(employeeNo, empresaId);
+            if (empOpt.isEmpty()) {
+                System.out.println("   [IGNORADO] Empleado con legajo " + employeeNo + " no pertenece a la empresa " + empresaId);
+                return;
+            }
+
             Fichada fichada = new Fichada();
             fichada.setLegajoReloj(employeeNo);
             fichada.setFechaHora(fechaHora);
@@ -183,6 +212,12 @@ public class HardwareSyncService {
                     String fechaHoraStr = fecha + " " + hora;
 
                     try {
+                        Optional<Empleado> empOpt = empleadoRepository.findByLegajoRelojAndEmpresaId(legajo, empresaId);
+                        if (empOpt.isEmpty()) {
+                            System.out.println("   [IGNORADO] Empleado con legajo " + legajo + " no pertenece a la empresa " + empresaId);
+                            continue;
+                        }
+
                         LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr, formatter);
                         
                         Fichada fichada = new Fichada();
@@ -204,5 +239,43 @@ public class HardwareSyncService {
         }
         
         return procesadas;
+    }
+
+    public String obtenerComandoPendiente(String serialNumber) {
+        if (serialNumber == null) return "OK";
+        Optional<Reloj> relojOpt = relojRepository.findByNumeroSerie(serialNumber);
+        if (relojOpt.isEmpty()) return "OK";
+        
+        Reloj reloj = relojOpt.get();
+        LocalDateTime ultimaConex = reloj.getUltimaConexion();
+        
+        // Actualizamos la conexion para futuros chequeos
+        reloj.setUltimaConexion(LocalDateTime.now());
+        relojRepository.save(reloj);
+
+        List<ComandoReloj> pendientes = comandoRelojRepository.findByRelojIdAndEjecutadoFalseOrderByFechaCreacionAsc(reloj.getId());
+        if (pendientes.isEmpty()) {
+            return "OK";
+        }
+
+        // Regla de seguridad: Si tiene un comando CLEAR ATTLOG, solo lo entregamos si el reloj ya estaba "al día".
+        // "al dia" significa que su ultima conexion (antes de este request) fue hace menos de 5 minutos,
+        // lo que asume que tuvo tiempo suficiente para enviar cualquier CDATA pendiente.
+        for (ComandoReloj cmd : pendientes) {
+            if ("CLEAR ATTLOG".equals(cmd.getComando())) {
+                if (ultimaConex == null || ChronoUnit.MINUTES.between(ultimaConex, LocalDateTime.now()) >= 5) {
+                    System.out.println("   [COMANDO PUESTO EN ESPERA] El reloj no esta al dia (ultima conexion hace >= 5 mins o nula). No se entrega CLEAR ATTLOG.");
+                    return "OK"; // Se queda esperando a que este al dia
+                }
+            }
+            
+            // Si pasamos la validacion, lo marcamos como ejecutado y lo entregamos
+            cmd.setEjecutado(true);
+            comandoRelojRepository.save(cmd);
+            System.out.println("   [COMANDO ENVIADO] " + cmd.getComando() + " a " + serialNumber);
+            return "C:" + cmd.getId() + ":" + cmd.getComando();
+        }
+
+        return "OK";
     }
 }

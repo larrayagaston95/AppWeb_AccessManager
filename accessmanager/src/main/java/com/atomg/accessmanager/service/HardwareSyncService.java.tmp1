@@ -1,0 +1,60 @@
+package com.atomg.accessmanager.service;
+
+import com.atomg.accessmanager.model.ComandoReloj;
+import com.atomg.accessmanager.model.Empleado;
+import com.atomg.accessmanager.model.Fichada;
+import com.atomg.accessmanager.model.Reloj;
+import com.atomg.accessmanager.model.Sucursal;
+import com.atomg.accessmanager.repository.ComandoRelojRepository;
+import com.atomg.accessmanager.repository.EmpleadoRepository;
+import com.atomg.accessmanager.repository.FichadaRepository;
+import com.atomg.accessmanager.repository.RelojRepository;
+import com.atomg.accessmanager.repository.SucursalRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class HardwareSyncService {
+
+    @Autowired
+    private EmpleadoRepository empleadoRepository;
+
+    @Autowired
+    private FichadaRepository fichadaRepository;
+
+    @Autowired
+    private RelojRepository relojRepository;
+
+    @Autowired
+    private SucursalRepository sucursalRepository;
+
+    @Autowired
+    private ComandoRelojRepository comandoRelojRepository;
+
+    public void procesarFichajesZKTeco(String serialNumber, String datosCrudos) {
+        if (datosCrudos == null || datosCrudos.isBlank() || serialNumber == null) {
+            return;
+        }
+        
+        System.out.println("=== NUEVOS FICHAJES ZKTECO [SN: " + serialNumber + "] ===");
+        
+        Optional<Reloj> relojOpt = relojRepository.findByNumeroSerie(serialNumber);
+        if (relojOpt.isEmpty()) {
+            System.out.println("   [IGNORADO] El reloj con SN " + serialNumber + " no esta registrado en el sistema.");
+            return;
+        }
+        Reloj reloj = relojOpt.get();
+        reloj.setUltimaConexion(LocalDateTime.now());
+        relojRepository.save(reloj);
+
+        Long empresaId = reloj.getEmpresa().getId();

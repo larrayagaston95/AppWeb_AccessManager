@@ -110,7 +110,7 @@ public class EmpleadoController {
      * Devuelve el próximo número de legajo disponible para la empresa del usuario autenticado.
      * Lógica: MAX(legajo_reloj numérico) + 1. Si no hay empleados, retorna 101.
      */
-    @GetMapping("/proximo-legajo")
+    @GetMapping({"/proximo-legajo", "/siguiente-legajo"})
     public ResponseEntity<?> proximoLegajo(HttpServletRequest request) {
         Long empresaId = (Long) request.getAttribute("empresaId");
         if (empresaId == null) return ResponseEntity.status(401).build();

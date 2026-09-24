@@ -53,7 +53,7 @@ export async function deleteEmpleado(id) {
  * @returns {Promise<number>} El próximo número de legajo sugerido.
  */
 export async function fetchProximoLegajo() {
-    const response = await fetch(`${BASE_URL}/proximo-legajo`, { headers: authHeaders() });
+    const response = await fetch(`${BASE_URL}/siguiente-legajo`, { headers: authHeaders() });
     const data = await handleResponse(response);
     return data.proximoLegajo;
 }

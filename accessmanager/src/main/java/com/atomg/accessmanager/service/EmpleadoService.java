@@ -67,18 +67,45 @@ public class EmpleadoService {
      * Calcula MAX(legajo_reloj numérico) entre los empleados de la empresa y devuelve MAX + 1.
      * Si la empresa no tiene empleados aún, devuelve 101.
      */
-    public int proximoLegajo(Long empresaId) {
-        List<Empleado> empleados = obtenerTodos(empresaId);
-        OptionalInt maxLegajo = empleados.stream()
-                .mapToInt(e -> {
-                    try {
-                        return Integer.parseInt(e.getLegajoReloj().trim());
-                    } catch (NumberFormatException ex) {
-                        return 0;
-                    }
-                })
-                .max();
-        return maxLegajo.isPresent() ? maxLegajo.getAsInt() + 1 : 101;
+    /**
+     * Calcula el proximo numero de legajo para un nuevo empleado.
+     * Recorrido del dato:
+     * 1. La Vista solicita el proximo legajo al Controlador al abrir el modal de creacion.
+     * 2. El Controlador invoca este Servicio.
+     * 3. El Servicio consulta el Repositorio (Modelo) para obtener la lista de empleados de la empresa.
+     * 4. Se calcula el maximo valor numerico de los legajos existentes.
+     * 5. Se retorna el valor maximo mas uno, o 101 como valor por defecto si no existen registros.
+     * 
+     * @param identificadorDeLaEmpresa ID unico de la empresa.
+     * @return El proximo numero de legajo disponible.
+     */
+    public int proximoLegajo(Long identificadorDeLaEmpresa) {
+        try {
+            // Se obtienen todos los empleados asociados a la empresa solicitada desde la base de datos
+            List<Empleado> listaDeEmpleadosDeLaEmpresa = obtenerTodos(identificadorDeLaEmpresa);
+            
+            // Se itera sobre la lista para convertir los legajos (que son String) a Integer y encontrar el valor maximo
+            java.util.OptionalInt maximoLegajoEncontrado = listaDeEmpleadosDeLaEmpresa.stream()
+                    .mapToInt(empleadoEnIteracion -> {
+                        try {
+                            // Se intenta convertir el legajo limpiando espacios en blanco a su valor numerico entero
+                            return Integer.parseInt(empleadoEnIteracion.getLegajoReloj().trim());
+                        } catch (NumberFormatException excepcionDeFormatoNumerico) {
+                            // En caso de que el legajo no sea numerico (ej. letras), se asume un valor de 0 para no romper el calculo
+                            return 0;
+                        }
+                    })
+                    .max();
+            
+            // Se evalua si se encontro algun legajo numerico. Si es asi, se retorna el valor maximo + 1.
+            // Si la empresa no tiene empleados registrados (es decir, esta vacia), se revierte el cambio y se devuelve 101.
+            return maximoLegajoEncontrado.isPresent() ? maximoLegajoEncontrado.getAsInt() + 1 : 101;
+        } catch (Exception excepcionGeneral) {
+            // Se captura cualquier fallo general durante la consulta a la base de datos o el procesamiento de la logica
+            System.err.println("Error en EmpleadoService.java -> proximoLegajo: Ocurri� un error al calcular el proximo legajo - " + excepcionGeneral.getMessage());
+            // Se retorna el valor por defecto en caso de falla critica para permitir la continuidad operativa
+            return 101;
+        }
     }
     
     private void mapearDatos(Empleado emp, Map<String, Object> data, Long empresaId) {
@@ -124,3 +151,5 @@ public class EmpleadoService {
         }
     }
 }
+
+

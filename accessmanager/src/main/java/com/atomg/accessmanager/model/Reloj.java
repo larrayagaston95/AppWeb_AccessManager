@@ -25,4 +25,7 @@ public class Reloj {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sucursal_id")
     private Sucursal sucursal;
+
+    @Column(name = "ultima_conexion")
+    private java.time.LocalDateTime ultimaConexion;
 }

@@ -113,23 +113,41 @@ public class AsistenciaService {
      * Recupera el reporte mensual individual de un empleado (fichadas dia a dia).
      * Enriquece las filas con "Ausente" → tipo de licencia si corresponde.
      */
-    public List<ReporteAsistencia> obtenerReporteMensual(String legajo, int anio, int mes) {
-        LocalDate inicio = LocalDate.of(anio, mes, 1);
-        LocalDate fin    = inicio.plusMonths(1).minusDays(1);
-        List<ReporteAsistencia> reportes = reporteAsistenciaRepository
-                .buscarReporteIndividual(legajo, inicio, fin);
+    /**
+     * Recupera el reporte mensual individual de un empleado (fichadas dia a dia).
+     * Recorrido del dato:
+     * 1. El Controlador extrae el ID de la Empresa y los parametros de fecha y legajo.
+     * 2. El Servicio procesa estas variables e invoca al Repositorio.
+     * 3. El Repositorio aisla la informacion (Seguridad Multi-Tenant).
+     * 4. Se enriquecen en memoria las ausencias procesando posibles licencias.
+     */
+    public List<ReporteAsistencia> obtenerReporteMensual(String legajoDelEmpleado, Long identificadorDeLaEmpresa, int anioRequerido, int mesRequerido) {
+        try {
+            LocalDate fechaDeInicio = LocalDate.of(anioRequerido, mesRequerido, 1);
+            LocalDate fechaDeFin = fechaDeInicio.plusMonths(1).minusDays(1);
+            
+            // Se realiza la busqueda estrictamente combinando legajo y empresa (Multi-Tenant)
+            List<ReporteAsistencia> listaDeReportes = reporteAsistenciaRepository
+                    .buscarReporteIndividual(legajoDelEmpleado, identificadorDeLaEmpresa, fechaDeInicio, fechaDeFin);
 
-        // Enriquecer filas "Ausente" con el tipo de licencia si hay una vigente
-        reportes.forEach(r -> {
-            if ("Ausente".equalsIgnoreCase(r.getObservaciones())
-                    && r.getEmpleado() != null) {
-                String obs = resolverObservacionAusencia(
-                        r.getEmpleado().getId(), r.getFecha(), "Ausente");
-                r.setObservaciones(obs);
-            }
-        });
+            // Enriquecer filas "Ausente" cruzando datos con el repositorio de licencias
+            listaDeReportes.forEach(reporteIterado -> {
+                try {
+                    if ("Ausente".equalsIgnoreCase(reporteIterado.getObservaciones()) && reporteIterado.getEmpleado() != null) {
+                        String observacionPorLicencia = resolverObservacionAusencia(
+                                reporteIterado.getEmpleado().getId(), reporteIterado.getFecha(), "Ausente");
+                        reporteIterado.setObservaciones(observacionPorLicencia);
+                    }
+                } catch (Exception excepcionIteracion) {
+                    System.err.println("Error en AsistenciaService.java -> obtenerReporteMensual: Fallo procesando licencia - " + excepcionIteracion.getMessage());
+                }
+            });
 
-        return reportes;
+            return listaDeReportes;
+        } catch (Exception excepcionConsulta) {
+            System.err.println("Error en AsistenciaService.java -> obtenerReporteMensual: Fallo general al buscar reportes - " + excepcionConsulta.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     /**

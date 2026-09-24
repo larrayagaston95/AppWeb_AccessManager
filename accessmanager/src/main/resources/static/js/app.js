@@ -53,16 +53,16 @@ function setTabActivo(idTab) {
 }
 
 function mostrarVista(vistaId) {
-    const vistas = ['vistaDashboard', 'vistaPanel', 'vistaEmpleados'];
+    const vistas = ['vistaDashboard', 'vistaPanel', 'vistaEmpleados', 'vistaRelojes'];
     vistas.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === vistaId) {
             el.classList.remove('d-none');
-            if (id === 'vistaEmpleados') el.classList.add('d-flex');
+            if (id === 'vistaEmpleados' || id === 'vistaRelojes') el.classList.add('d-flex');
         } else {
             el.classList.add('d-none');
-            if (id === 'vistaEmpleados') el.classList.remove('d-flex');
+            if (id === 'vistaEmpleados' || id === 'vistaRelojes') el.classList.remove('d-flex');
         }
     });
     // La barra de filtros de asistencia solo es visible en vistaPanel
@@ -338,4 +338,39 @@ if (formSubirOffline) {
     });
 }
 
+
+
+// Logic for Limpiar Memoria
+const btnLimpiarMemoria = document.getElementById('btnLimpiarMemoria');
+if (btnLimpiarMemoria) {
+    btnLimpiarMemoria.addEventListener('click', async () => {
+        const relojId = prompt('Ingrese el ID del Reloj para limpiar su memoria (CLEAR ATTLOG):');
+        if (!relojId) return;
+
+        if (!confirm('¿Está seguro de que desea limpiar la memoria física de este reloj? Esto borrará todos los fichajes almacenados en el dispositivo. Asegúrese de que el reloj esté al día.')) {
+            return;
+        }
+
+        const token = localStorage.getItem('access_token_am');
+        try {
+            const response = await fetch('/api/relojes/' + relojId + '/limpiar-memoria', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (response.ok) {
+                const res = await response.json();
+                alert(res.message || 'Comando encolado correctamente.');
+            } else {
+                const err = await response.json();
+                alert('Error: ' + (err.error || 'No se pudo encolar el comando.'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de red al intentar limpiar la memoria.');
+        }
+    });
+}
 

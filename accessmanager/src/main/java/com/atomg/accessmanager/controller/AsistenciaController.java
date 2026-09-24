@@ -27,11 +27,17 @@ public class AsistenciaController {
 
     @GetMapping("/reporte-mensual") // o /mensual según la ruta exacta que tengas en tu controller
     public ResponseEntity<?> obtenerReporteMensual(
+            jakarta.servlet.http.HttpServletRequest request,
             @RequestParam String legajo,
             @RequestParam int anio,
             @RequestParam int mes) {
 
-        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(legajo, anio, mes);
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(legajo, empresaId, anio, mes);
 
         // Convertimos la lista de entidades a un mapa plano seguro para Jackson
         List<Map<String, Object>> respuestaLimpia = reportes.stream().map(rep -> {
@@ -71,7 +77,7 @@ public class AsistenciaController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado o empleado no existe.");
         }
 
-        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(emp.getLegajoReloj(), anio, mes);
+        List<ReporteAsistencia> reportes = asistenciaService.obtenerReporteMensual(emp.getLegajoReloj(), empresaId, anio, mes);
 
         List<Map<String, Object>> respuestaLimpia = reportes.stream().map(rep -> {
             Map<String, Object> fila = new HashMap<>();

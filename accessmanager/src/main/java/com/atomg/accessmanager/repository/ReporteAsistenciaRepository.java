@@ -29,12 +29,20 @@ public interface ReporteAsistenciaRepository extends JpaRepository<ReporteAsiste
     );
 
     // ── 2. REPORTE INDIVIDUAL (día a día de un empleado) ──────────────────────
+    /**
+     * Recorrido del dato:
+     * 1. El Controlador recibe la peticion de detalle de asistencia y extrae el identificador de la empresa.
+     * 2. El Servicio invoca esta consulta pasandole ambos parametros.
+     * 3. Se retorna la lista de reportes, aislando estrictamente la informacion por inquilino (tenant).
+     */
     @Query("SELECT r FROM ReporteAsistencia r " +
             "WHERE r.empleado.legajoReloj = :legajo " +
+            "AND r.empleado.empresaId = :empresaId " +
             "AND r.fecha BETWEEN :fechaInicio AND :fechaFin " +
             "ORDER BY r.fecha ASC")
     List<ReporteAsistencia> buscarReporteIndividual(
             @Param("legajo")      String    legajo,
+            @Param("empresaId")   Long      empresaId,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin")    LocalDate fechaFin
     );

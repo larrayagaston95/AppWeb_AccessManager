@@ -57,4 +57,23 @@ public class AuthController {
                 "empresaId", usuario.getEmpresa().getId()
         ));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            
+            Usuario usuario = usuarioRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+            
+            return ResponseEntity.ok(Map.of(
+                    "username", usuario.getUsername(),
+                    "rol", usuario.getRol(),
+                    "empresaNombre", usuario.getEmpresa().getNombre()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

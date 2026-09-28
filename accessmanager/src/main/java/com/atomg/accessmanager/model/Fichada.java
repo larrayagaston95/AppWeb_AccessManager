@@ -32,4 +32,8 @@ public class Fichada {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sucursal_id", nullable = true)
     private Sucursal sucursal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_id", nullable = true)
+    private Sector sector;
 }

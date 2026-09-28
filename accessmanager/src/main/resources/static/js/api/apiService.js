@@ -1,6 +1,6 @@
-const BASE_URL = '/api/v1/asistencia';
+﻿const BASE_URL = '/api/v1/asistencia';
 
-// ── 1. Helper para los headers ────────────────────────────────────────────────
+// â”€â”€ 1. Helper para los headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function authHeaders() {
     const token = localStorage.getItem('access_token_am');
     if (!token) return {};
@@ -9,7 +9,7 @@ function authHeaders() {
     };
 }
 
-// ── 2. Manejo de respuesta genérico ───────────────────────────────────────────
+// â”€â”€ 2. Manejo de respuesta genérico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function handleResponse(response) {
     if (response.status === 401 || response.status === 403) {
         localStorage.removeItem('access_token_am');
@@ -69,7 +69,7 @@ export async function fetchSectoresPorSucursal(sucursalId) {
         );
         return await handleResponse(response);
     } catch (error) {
-        console.error('❌ Error en fetchSectoresPorSucursal:', error);
+        console.error('âŒ Error en fetchSectoresPorSucursal:', error);
         if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN') throw error;
         return [];
     }
@@ -88,7 +88,7 @@ export async function fetchEmpleadosPorSector(sectorId) {
         );
         return await handleResponse(response);
     } catch (error) {
-        console.error('❌ Error en fetchEmpleadosPorSector:', error);
+        console.error('âŒ Error en fetchEmpleadosPorSector:', error);
         if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN') throw error;
         return [];
     }
@@ -107,8 +107,15 @@ export async function fetchResumenSector(sectorId, anio, mes) {
         const response = await fetch(url, { headers: authHeaders() });
         return await handleResponse(response);
     } catch (error) {
-        console.error('❌ Error en fetchResumenSector:', error);
+        console.error('âŒ Error en fetchResumenSector:', error);
         if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN') throw error;
         return [];
     }
 }
+
+export async function fetchCurrentUserInfo() {
+    const response = await fetch('/api/auth/me', { method: 'GET', headers: authHeaders() });
+    return handleResponse(response);
+}
+
+

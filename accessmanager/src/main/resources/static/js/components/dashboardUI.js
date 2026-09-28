@@ -1,4 +1,4 @@
-/**
+﻿/**
  * dashboardUI.js
  * Renderiza las 4 tarjetas de KPI del Dashboard de asistencia en tiempo real
  * y gestiona el filtro por Sucursal.
@@ -12,7 +12,7 @@ import { fetchSucursales } from '../api/apiService.js';
 // -----------------------------------------------------------------------------
 
 /**
- * Dibuja las 4 tarjetas KPI con animaci�n de n�mero y c�digo de color.
+ * Dibuja las 4 tarjetas KPI con animación de número y código de color.
  * @param {{totalEmpleados, presentes, ausentes, llegadasTarde}} data
  */
 function renderDashboardCards(data) {
@@ -43,7 +43,7 @@ function renderDashboardCards(data) {
                     <i class="bi bi-person-check-fill"></i>
                 </div>
                 <div class="card-dashboard__body">
-                    <span class="card-dashboard__label">?? Presentes Hoy</span>
+                    <span class="card-dashboard__label">✔️ Presentes Hoy</span>
                     <span class="card-dashboard__value" id="kpiPresentes">${presentes}</span>
                     <span class="card-dashboard__sub">${totalEmpleados > 0 ? Math.round((presentes / totalEmpleados) * 100) : 0}% de asistencia</span>
                 </div>
@@ -57,7 +57,7 @@ function renderDashboardCards(data) {
                     <i class="bi bi-person-x-fill"></i>
                 </div>
                 <div class="card-dashboard__body">
-                    <span class="card-dashboard__label">?? Ausentes</span>
+                    <span class="card-dashboard__label">❌ Ausentes</span>
                     <span class="card-dashboard__value" id="kpiAusentes">${ausentes}</span>
                     <span class="card-dashboard__sub">Sin registro de entrada</span>
                 </div>
@@ -71,7 +71,7 @@ function renderDashboardCards(data) {
                     <i class="bi bi-alarm-fill"></i>
                 </div>
                 <div class="card-dashboard__body">
-                    <span class="card-dashboard__label">?? Llegadas Tarde</span>
+                    <span class="card-dashboard__label">⏰ Llegadas Tarde</span>
                     <span class="card-dashboard__value" id="kpiTarde">${llegadasTarde}</span>
                     <span class="card-dashboard__sub">Superaron horario base</span>
                 </div>
@@ -120,7 +120,7 @@ async function cargarDatosDashboard(sucursalId) {
                 <div class="col-12">
                     <div class="alert alert-danger d-flex align-items-center gap-2 border-0 rounded-3">
                         <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                        <span>No se pudo conectar con el servidor. Verific� que el backend est� activo.</span>
+                        <span>No se pudo conectar con el servidor. Verificá que el backend esté activo.</span>
                     </div>
                 </div>`;
         }
@@ -137,7 +137,7 @@ async function cargarSucursalesEnFiltro() {
 
     try {
         const sucursales = await fetchSucursales();
-        select.innerHTML = `<option value="">?? Todas las Sucursales</option>`;
+        select.innerHTML = `<option value="">🏢 Todas las Sucursales</option>`;
         sucursales.forEach(suc => {
             const opt = document.createElement('option');
             opt.value = suc.id;
@@ -150,7 +150,7 @@ async function cargarSucursalesEnFiltro() {
 }
 
 // -----------------------------------------------------------------------------
-// Punto de entrada p�blico
+// Punto de entrada público
 // -----------------------------------------------------------------------------
 
 /**
@@ -176,3 +176,4 @@ export async function initDashboard() {
         select.dataset.bound = 'true';
     }
 }
+

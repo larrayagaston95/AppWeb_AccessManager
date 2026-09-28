@@ -1,4 +1,4 @@
-const mapaMeses = {
+﻿const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
@@ -38,7 +38,7 @@ export async function exportarIndividual() {
         + `&mes=${mesNumero}`
         + `&nombreEmpleado=${encodeURIComponent(nombreEmpleado)}`;
 
-    console.log('📥 Descargando PDF individual:', url);
+    console.log('ðŸ“¥ Descargando PDF individual:', url);
     
     try {
         const response = await fetch(url, { headers: getAuthHeaders() });
@@ -57,7 +57,7 @@ export async function exportarIndividual() {
 }
 
 /**
- * Exporta el PDF masivo filtrado por sucursal (ID) y sección (ID) en el período indicado.
+ * Exporta el PDF masivo filtrado por sucursal (ID) y Sección (ID) en el período indicado.
  * Abre el PDF en una nueva pestaña (inline preview).
  *
  * @param {string|number} [anioParam]  - Año a usar (opcional; si no se pasa, lee el select).
@@ -89,7 +89,7 @@ export async function exportarMasivo(anioParam, mesParam) {
         + `&anio=${anio}`
         + `&mes=${mesNumero}`;
 
-    console.log('📥 Descargando PDF masivo:', url);
+    console.log('ðŸ“¥ Descargando PDF masivo:', url);
     
     try {
         const response = await fetch(url, { headers: getAuthHeaders() });
@@ -105,3 +105,5 @@ export async function exportarMasivo(anioParam, mesParam) {
         alert('Ocurrió un problema al descargar el reporte masivo.');
     }
 }
+
+

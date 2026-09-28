@@ -1,4 +1,4 @@
-const BASE_URL = '/api/empleados';
+﻿const BASE_URL = '/api/empleados';
 
 function authHeaders() {
     const token = localStorage.getItem('access_token_am');
@@ -57,3 +57,4 @@ export async function fetchProximoLegajo() {
     const data = await handleResponse(response);
     return data.proximoLegajo;
 }
+

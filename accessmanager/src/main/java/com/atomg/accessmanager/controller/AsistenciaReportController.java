@@ -29,14 +29,17 @@ public class AsistenciaReportController {
     @Autowired
     private AsistenciaService asistenciaService;
 
+    @Autowired
+    private com.atomg.accessmanager.repository.UsuarioRepository usuarioRepository;
+
     /** Nombres de meses en castellano indexados por número (1-12). */
     private static final String[] NOMBRES_MESES = {
             "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     };
 
-    private static final DateTimeFormatter HORA_FMT  = DateTimeFormatter.ofPattern("hh:mm a");
-    private static final DateTimeFormatter FECHA_FMT  = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter HORA_FMT = DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter FECHA_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // =========================================================================
     // HELPERS PRIVADOS
@@ -62,7 +65,8 @@ public class AsistenciaReportController {
                 }
             }
         } catch (Exception e) {
-            System.err.println("⚠️  Logo no encontrado o vacío en classpath:reports/img/logo.png — el reporte se genera sin imagen.");
+            System.err.println(
+                    "⚠️  Logo no encontrado o vacío en classpath:reports/img/logo.png — el reporte se genera sin imagen.");
         }
         return null;
     }
@@ -74,21 +78,21 @@ public class AsistenciaReportController {
     private Map<String, String> toFilaJasper(ReporteAsistencia r) {
         Map<String, String> fila = new HashMap<>();
 
-        String legajoEmp  = r.getEmpleado() != null ? r.getEmpleado().getLegajoReloj() : "";
+        String legajoEmp = r.getEmpleado() != null ? r.getEmpleado().getLegajoReloj() : "";
         String nombreComp = r.getEmpleado() != null
                 ? r.getEmpleado().getNombre() + " " + r.getEmpleado().getApellido()
                 : "";
 
-        fila.put("legajo",          legajoEmp);
-        fila.put("LEGAJO",          legajoEmp);
+        fila.put("legajo", legajoEmp);
+        fila.put("LEGAJO", legajoEmp);
         fila.put("EMPLEADO_NOMBRE", nombreComp);
-        fila.put("empleadoNombre",  nombreComp);
-        fila.put("fecha",           r.getFecha()   != null ? r.getFecha().format(FECHA_FMT)  : "");
-        fila.put("entrada",         r.getEntrada() != null ? r.getEntrada().format(HORA_FMT) : "--:--");
-        fila.put("salida",          r.getSalida()  != null ? r.getSalida().format(HORA_FMT)  : "--:--");
+        fila.put("empleadoNombre", nombreComp);
+        fila.put("fecha", r.getFecha() != null ? r.getFecha().format(FECHA_FMT) : "");
+        fila.put("entrada", r.getEntrada() != null ? r.getEntrada().format(HORA_FMT) : "--:--");
+        fila.put("salida", r.getSalida() != null ? r.getSalida().format(HORA_FMT) : "--:--");
         fila.put("horasTrabajadas", r.getHorasTrabajadas() + " hs");
-        fila.put("horasExtras",     r.getHorasExtras()     + " hs");
-        fila.put("estado",          r.getObservaciones()   != null ? r.getObservaciones() : "Normal");
+        fila.put("horasExtras", r.getHorasExtras() + " hs");
+        fila.put("estado", r.getObservaciones() != null ? r.getObservaciones() : "Normal");
         return fila;
     }
 
@@ -99,18 +103,29 @@ public class AsistenciaReportController {
     @GetMapping("/asistencia")
     public ResponseEntity<byte[]> descargarReporteAsistencia(
             @RequestParam String legajo,
-            @RequestParam int    anio,
-            @RequestParam int    mes,
+            @RequestParam int anio,
+            @RequestParam int mes,
             @RequestParam(required = false, defaultValue = "Empleado") String nombreEmpleado) {
 
         try {
-            List<ReporteAsistencia> listadoReal = asistenciaService.obtenerReporteMensual(legajo, anio, mes);
+            // List<ReporteAsistencia> listadoReal =
+            // asistenciaService.obtenerReporteMensual(legajo, anio, mes);
+            // Obtenemos el usuario autenticado de forma segura
+            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            String username = authentication.getName();
+            com.atomg.accessmanager.model.Usuario usuario = usuarioRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+            Long empresaId = usuario.getEmpresa().getId();
 
+            // Llamamos al servicio con el nuevo parámetro
+            List<ReporteAsistencia> listadoReal = asistenciaService.obtenerReporteMensual(legajo, empresaId, anio, mes);
             if (listadoReal.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
 
-            String nombreEmpresaReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getEmpresa().getNombre();
+            String nombreEmpresaReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getEmpresa()
+                    .getNombre();
             String nombreSucursalReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getNombre();
             String nombreSectorReal = listadoReal.get(0).getEmpleado().getSector().getNombre();
 
@@ -118,12 +133,12 @@ public class AsistenciaReportController {
             List<Map<String, String>> filasReporte = new ArrayList<>();
             for (ReporteAsistencia r : listadoReal) {
                 Map<String, String> fila = new HashMap<>();
-                fila.put("fecha",           r.getFecha()   != null ? r.getFecha().format(FECHA_FMT)  : "");
-                fila.put("entrada",         r.getEntrada() != null ? r.getEntrada().format(HORA_FMT) : "--:--");
-                fila.put("salida",          r.getSalida()  != null ? r.getSalida().format(HORA_FMT)  : "--:--");
+                fila.put("fecha", r.getFecha() != null ? r.getFecha().format(FECHA_FMT) : "");
+                fila.put("entrada", r.getEntrada() != null ? r.getEntrada().format(HORA_FMT) : "--:--");
+                fila.put("salida", r.getSalida() != null ? r.getSalida().format(HORA_FMT) : "--:--");
                 fila.put("horasTrabajadas", r.getHorasTrabajadas() + " hs");
-                fila.put("horasExtras",     r.getHorasExtras()     + " hs");
-                fila.put("estado",          r.getObservaciones()   != null ? r.getObservaciones() : "Normal");
+                fila.put("horasExtras", r.getHorasExtras() + " hs");
+                fila.put("estado", r.getObservaciones() != null ? r.getObservaciones() : "Normal");
                 filasReporte.add(fila);
             }
 
@@ -137,8 +152,8 @@ public class AsistenciaReportController {
             parametros.put("EMPRESA_NOMBRE", nombreEmpresaReal);
             parametros.put("EMPLEADO_NOMBRE", nombreEmpleado);
             parametros.put("SUCURSAL", nombreSucursalReal);
-            parametros.put("SECCION",  nombreSectorReal);
-            parametros.put("PERIODO",  buildPeriodo(mes, anio));
+            parametros.put("SECCION", nombreSectorReal);
+            parametros.put("PERIODO", buildPeriodo(mes, anio));
 
             // Logo (null-safe: Jasper lo omite si es null)
             BufferedImage logoImage = cargarLogo();
@@ -149,7 +164,7 @@ public class AsistenciaReportController {
             JRBeanCollectionDataSource ds = new JRBeanCollectionDataSource(filasReporte, false);
             JasperReport jasperReport = JasperCompileManager.compileReport(jrxmlResource.getInputStream());
             JasperPrint print = JasperFillManager.fillReport(jasperReport, parametros, ds);
-            byte[] pdfBytes   = JasperExportManager.exportReportToPdf(print);
+            byte[] pdfBytes = JasperExportManager.exportReportToPdf(print);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -166,22 +181,26 @@ public class AsistenciaReportController {
 
     // =========================================================================
     // ENDPOINT 2 — PDF MASIVO (paginado por empleado dentro del sector)
-    // GET /api/reportes/asistencia-masiva?empresaId=&sucursalId=&sectorId=&anio=&mes=
+    // GET
+    // /api/reportes/asistencia-masiva?empresaId=&sucursalId=&sectorId=&anio=&mes=
     // =========================================================================
     @GetMapping("/asistencia-masiva")
     public ResponseEntity<byte[]> descargarReporteAsistenciaMasiva(
             HttpServletRequest request,
             @RequestParam Long sucursalId,
             @RequestParam Long sectorId,
-            @RequestParam int  anio,
-            @RequestParam int  mes) {
-
-        Long empresaId = (Long) request.getAttribute("empresaId");
-        if (empresaId == null) {
-            return ResponseEntity.status(401).build();
-        }
+            @RequestParam int anio,
+            @RequestParam int mes) {
 
         try {
+            // Obtenemos el usuario autenticado de forma segura
+            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            String username = authentication.getName();
+            com.atomg.accessmanager.model.Usuario usuario = usuarioRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+            Long empresaId = usuario.getEmpresa().getId();
+
             List<ReporteAsistencia> listadoReal = asistenciaService.obtenerReporteMensualMasivo(
                     empresaId, sucursalId, sectorId, anio, mes);
 
@@ -190,9 +209,10 @@ public class AsistenciaReportController {
             }
 
             // Textos reales para los parámetros de encabezado (navegamos JPA)
-            String nombreEmpresaReal   = listadoReal.get(0).getEmpleado().getSector().getSucursal().getEmpresa().getNombre();
-            String nombreSucursalReal  = listadoReal.get(0).getEmpleado().getSector().getSucursal().getNombre();
-            String nombreSectorReal    = listadoReal.get(0).getEmpleado().getSector().getNombre();
+            String nombreEmpresaReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getEmpresa()
+                    .getNombre();
+            String nombreSucursalReal = listadoReal.get(0).getEmpleado().getSector().getSucursal().getNombre();
+            String nombreSectorReal = listadoReal.get(0).getEmpleado().getSector().getNombre();
 
             // Formateamos TODAS las filas (la agrupación por empleado la hace Jasper)
             List<Map<String, String>> filasReporte = new ArrayList<>();
@@ -210,8 +230,8 @@ public class AsistenciaReportController {
             Map<String, Object> parametros = new HashMap<>();
             parametros.put("EMPRESA_NOMBRE", nombreEmpresaReal);
             parametros.put("SUCURSAL", nombreSucursalReal);
-            parametros.put("SECCION",  nombreSectorReal);
-            parametros.put("PERIODO",  buildPeriodo(mes, anio));
+            parametros.put("SECCION", nombreSectorReal);
+            parametros.put("PERIODO", buildPeriodo(mes, anio));
 
             // Logo institucional desde classpath (null-safe)
             BufferedImage logoImage = cargarLogo();
@@ -222,7 +242,7 @@ public class AsistenciaReportController {
             JRBeanCollectionDataSource ds = new JRBeanCollectionDataSource(filasReporte, false);
             JasperReport jasperReport = JasperCompileManager.compileReport(jrxmlResource.getInputStream());
             JasperPrint print = JasperFillManager.fillReport(jasperReport, parametros, ds);
-            byte[] pdfBytes   = JasperExportManager.exportReportToPdf(print);
+            byte[] pdfBytes = JasperExportManager.exportReportToPdf(print);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);

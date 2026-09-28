@@ -1,34 +1,34 @@
-import { fetchSucursales, fetchSectoresPorSucursal, fetchEmpleadosPorSector } from '../api/apiService.js';
+﻿import { fetchSucursales, fetchSectoresPorSucursal, fetchEmpleadosPorSector } from '../api/apiService.js';
 
-// Mapa local de meses para traducir texto → número
+// Mapa local de meses para traducir texto â†’ número
 const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
 
 /**
- * Inicializa Select2 y carga la cascada Sucursal → Sección → Empleado.
+ * Inicializa Select2 y carga la cascada Sucursal â†’ Sección â†’ Empleado.
  * Debe ejecutarse UNA SOLA VEZ después de que el DOM del header ya fue renderizado.
  */
 export async function inicializarCombosInteligentes() {
-    console.log('🚀 Inicializando combos inteligentes (BD real)...');
+    console.log('ðŸš€ Inicializando combos inteligentes (BD real)...');
 
     const $sucursal = $('#selectSucursal');
-    const $sector   = $('#selectSeccion');   // único ID de sección en el header
+    const $sector   = $('#selectSeccion');   // único ID de Sección en el header
     const $empleado = $('#selectEmpleado');
 
     // Registramos eventos de cascada con namespace propio para poder des-registrarlos
     // limpiamente si en algún futuro se re-inicia (evitamos listeners duplicados).
     $(document).off('change.cascada');
 
-    // ── 1. INICIALIZACIÓN SELECT2 ────────────────────────────────────────────
+    // â”€â”€ 1. INICIALIZACIÃ“N SELECT2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     $sucursal.add($sector).add($empleado).select2({
         placeholder: 'Seleccione una opción...',
         allowClear: false,
         width: '100%'
     });
 
-    // ── 2. CARGA INICIAL DE SUCURSALES ───────────────────────────────────────
+    // â”€â”€ 2. CARGA INICIAL DE SUCURSALES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try {
         const sucursales = await fetchSucursales(1);
         $sucursal.empty().append('<option value="">-- Seleccione Sucursal --</option>');
@@ -42,12 +42,12 @@ export async function inicializarCombosInteligentes() {
         }
 
         $sucursal.trigger('change.select2');
-        console.log(`✅ Sucursales cargadas: ${sucursales.length}`);
+        console.log(`âœ… Sucursales cargadas: ${sucursales.length}`);
     } catch (err) {
-        console.error('❌ Error al cargar sucursales:', err);
+        console.error('âŒ Error al cargar sucursales:', err);
     }
 
-    // ── 3. CASCADA: SUCURSAL → SECCIÓN ──────────────────────────────────────
+    // â”€â”€ 3. CASCADA: SUCURSAL â†’ SECCIÃ“N â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     $(document).on('change.cascada', '#selectSucursal', async function () {
         const sucursalId = $(this).val();
 
@@ -57,7 +57,7 @@ export async function inicializarCombosInteligentes() {
 
         if (!sucursalId) return;
 
-        console.log(`🔍 Cargando sectores para sucursalId=${sucursalId}`);
+        console.log(`ðŸ” Cargando sectores para sucursalId=${sucursalId}`);
         const sectores = await fetchSectoresPorSucursal(sucursalId);
         let opciones = '<option value="">-- Seleccione Sección --</option>';
 
@@ -68,10 +68,10 @@ export async function inicializarCombosInteligentes() {
         }
 
         $sector.html(opciones).trigger('change.select2');
-        console.log(`✅ Sectores cargados: ${sectores.length}`);
+        console.log(`âœ… Sectores cargados: ${sectores.length}`);
     });
 
-    // ── 4. CASCADA: SECCIÓN → EMPLEADO ───────────────────────────────────────
+    // â”€â”€ 4. CASCADA: SECCIÃ“N â†’ EMPLEADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     $(document).on('change.cascada', '#selectSeccion', async function () {
         const sectorId = $(this).val();
 
@@ -79,7 +79,7 @@ export async function inicializarCombosInteligentes() {
 
         if (!sectorId) return;
 
-        console.log(`🔍 Cargando empleados para sectorId=${sectorId}`);
+        console.log(`ðŸ” Cargando empleados para sectorId=${sectorId}`);
         const empleados = await fetchEmpleadosPorSector(sectorId);
         let opciones = '<option value="">-- Seleccione Empleado --</option>';
 
@@ -92,6 +92,9 @@ export async function inicializarCombosInteligentes() {
         }
 
         $empleado.html(opciones).trigger('change.select2');
-        console.log(`✅ Empleados cargados: ${empleados.length}`);
+        console.log(`âœ… Empleados cargados: ${empleados.length}`);
     });
 }
+
+
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Genera el PDF corporativo de asistencia de forma programática.
  * @param {Object} empleado - Datos del operario seleccionado.
  * @param {Array} filasTabla - Array con los fichajes de la tabla del front.
@@ -17,7 +17,7 @@ export function exportarAsistenciaPDF(empleado, filasTabla) {
     doc.text("EMPRESA: COOPERATIVA CENTRAL", 14, 20);
 
     // Fecha de emisión (Arriba a la derecha)
-    doc.text("EMISIÓN: 11/06/2026", 150, 15);
+    doc.text("EMISIÃ“N: 11/06/2026", 150, 15);
 
     // Línea divisoria firme
     doc.setDrawColor(0, 0, 0);
@@ -28,7 +28,7 @@ export function exportarAsistenciaPDF(empleado, filasTabla) {
     doc.setFont("Helvetica", "bold");
     doc.text(`EMPLEADO: ${empleado.nombre} (Legajo ${empleado.legajo})`, 14, 30);
     doc.text(`SUCURSAL: ${empleado.sucursal}`, 14, 35);
-    doc.text(`SECCIÓN: ${empleado.seccion}`, 110, 30);
+    doc.text(`SECCIÃ“N: ${empleado.seccion}`, 110, 30);
     doc.text(`PERÍODO: ${empleado.periodo}`, 110, 35);
 
     // 3. Título del Reporte
@@ -60,3 +60,4 @@ export function exportarAsistenciaPDF(empleado, filasTabla) {
     // 5. Descarga directa del archivo
     doc.save(`asistencia_${empleado.legajo}_${empleado.periodo}.pdf`);
 }
+

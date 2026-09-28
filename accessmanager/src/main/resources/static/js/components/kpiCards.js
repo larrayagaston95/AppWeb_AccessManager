@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Renderiza dinámicamente las tarjetas de KPIs en el contenedor del panel.
  * @param {number} dias - Cantidad de días procesados en el mes.
  * @param {number} horas - Sumatoria total de horas trabajadas.
@@ -37,3 +37,4 @@ export function renderKPIs(dias, horas, extras) {
         </div>
     `;
 }
+

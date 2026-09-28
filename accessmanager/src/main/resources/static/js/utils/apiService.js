@@ -1,4 +1,4 @@
-const BASE_URL = '/api/v1/asistencia';
+﻿const BASE_URL = '/api/v1/asistencia';
 
 /**
  * Realiza la petición HTTP GET al backend para traer las asistencias.
@@ -25,3 +25,4 @@ export async function fetchReporteMensual(legajo, anio, mes) {
 
     return await response.json();
 }
+

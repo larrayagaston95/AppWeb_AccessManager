@@ -17,14 +17,16 @@ public class FichadaController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFichadas(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("sucursalId") Long sucursalId) {
+            @RequestParam("sucursalId") Long sucursalId,
+            @RequestParam("sectorId") Long sectorId,
+            @RequestParam("marca") String marca) {
         
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("El archivo está vacío.");
         }
 
         try {
-            int procesadas = hardwareSyncService.procesarArchivoFichadasOffline(file, sucursalId);
+            int procesadas = hardwareSyncService.procesarArchivoFichadasOffline(file, sucursalId, sectorId, marca);
             return ResponseEntity.ok("Se procesaron " + procesadas + " fichadas exitosamente.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

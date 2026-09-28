@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Renderiza el pie de página corporativo de forma dinámica.
  */
 export function renderFooter() {
@@ -13,3 +13,4 @@ export function renderFooter() {
         </div>
     `;
 }
+

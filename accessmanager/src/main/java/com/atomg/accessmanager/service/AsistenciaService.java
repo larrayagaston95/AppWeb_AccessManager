@@ -105,6 +105,10 @@ public class AsistenciaService {
         }
     }
 
+    public Fichada guardarFichada(Fichada fichada) {
+        return fichadaRepository.save(fichada);
+    }
+
     // =========================================================================
     // CONSULTAS DE REPORTE
     // =========================================================================

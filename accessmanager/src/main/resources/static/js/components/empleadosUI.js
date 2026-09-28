@@ -1,4 +1,4 @@
-import { fetchEmpleadosTodos, createEmpleado, updateEmpleado, deleteEmpleado, fetchProximoLegajo } from '../api/empleadoService.js';
+﻿import { fetchEmpleadosTodos, createEmpleado, updateEmpleado, deleteEmpleado, fetchProximoLegajo } from '../api/empleadoService.js';
 import { fetchSucursales, fetchSectoresPorSucursal } from '../api/apiService.js';
 import { createLicencia } from '../api/licenciaService.js';
 
@@ -150,7 +150,7 @@ async function abrirModalCrear() {
     document.getElementById('empId').value = '';
     document.getElementById('empSeccion').innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
 
-    // ── Autocompletar Legajo ──────────────────────────────────────────────────
+    // â”€â”€ Autocompletar Legajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const inputLegajo = document.getElementById('empLegajo');
     try {
         const proximo = await fetchProximoLegajo();
@@ -244,3 +244,4 @@ async function guardarLicencia() {
         alert('Error al registrar la licencia: ' + (e.message || e));
     }
 }
+

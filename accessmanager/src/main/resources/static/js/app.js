@@ -12,14 +12,14 @@ import { initEmpleadosUI } from './components/empleadosUI.js';
 const vistaApp   = document.getElementById('vistaApp');
 const vistaPanel = document.getElementById('vistaPanel');
 
-// Mapa de texto de mes ? n�mero
+// Mapa de texto de mes ? nÃºmero
 const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
 
 // ============================================================================
-// 1. INICIALIZACI�N DE ESTRUCTURA UI (UNA SOLA VEZ por sesi�n)
+// 1. INICIALIZACIÃ“N DE ESTRUCTURA UI (UNA SOLA VEZ por sesiÃ³n)
 // ============================================================================
 async function inicializarEstructuraUI() {
     renderHeader(ejecutarCierreSesion);
@@ -28,18 +28,18 @@ async function inicializarEstructuraUI() {
     vincularNavegacionSPA();
     await inicializarCombosInteligentes();
     await initEmpleadosUI();
-    await initDashboard();       // M�dulo 1: Dashboard en tiempo real
+    await initDashboard();       // MÃ³dulo 1: Dashboard en tiempo real
     actualizarFechaDashboard();  // Muestra la fecha de hoy en el encabezado
 }
 
 /**
- * Conecta los tabs de navegaci�n principal
+ * Conecta los tabs de navegaciÃ³n principal
  */
 /**
- * Helpers de navegaci�n SPA: activa un tab y desactiva los dem�s.
+ * Helpers de navegaciÃ³n SPA: activa un tab y desactiva los demÃ¡s.
  */
 function setTabActivo(idTab) {
-    ['navDashboard', 'navAsistencia', 'navPersonal'].forEach(id => {
+    ['navDashboard', 'navAsistencia', 'navPersonal', 'navRelojes'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === idTab) {
@@ -76,6 +76,7 @@ function vincularNavegacionSPA() {
     const navDashboard  = document.getElementById('navDashboard');
     const navAsistencia = document.getElementById('navAsistencia');
     const navPersonal   = document.getElementById('navPersonal');
+    const navRelojes    = document.getElementById('navRelojes');
 
     navDashboard?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -94,11 +95,18 @@ function vincularNavegacionSPA() {
         setTabActivo('navPersonal');
         mostrarVista('vistaEmpleados');
     });
+
+    navRelojes?.addEventListener('click', (e) => {
+        e.preventDefault();
+        setTabActivo('navRelojes');
+        mostrarVista('vistaRelojes');
+        if (typeof cargarRelojesUI === 'function') cargarRelojesUI();
+    });
 }
 
 /**
- * Conecta el bot�n #btnFiltrar del header din�mico.
- * Se llama despu�s de renderHeader() con flag anti-duplicado.
+ * Conecta el botÃ³n #btnFiltrar del header dinÃ¡mico.
+ * Se llama despuÃ©s de renderHeader() con flag anti-duplicado.
  */
 function vincularBtnFiltrarHeader() {
     const btn = document.getElementById('btnFiltrar');
@@ -127,22 +135,22 @@ function leerFiltros() {
 }
 
 // ============================================================================
-// 3. ACTUALIZAR PANEL � L�gica dual:
+// 3. ACTUALIZAR PANEL â€” LÃ³gica dual:
 //    - Con legajo ? Modo Individual (fichadas diarias)
 //    - Sin legajo ? Modo Sector     (resumen consolidado)
 // ============================================================================
 async function actualizarPanel() {
     const { legajo, sectorId, anio, mesNumero } = leerFiltros();
 
-    // Determinamos el modo seg�n si hay empleado seleccionado
+    // Determinamos el modo segÃºn si hay empleado seleccionado
     const modoIndividual = legajo !== '';
 
     if (!modoIndividual && !sectorId) {
-        alert('Por favor seleccione al menos una Secci�n para consultar el resumen del sector.');
+        alert('Por favor seleccione al menos una SecciÃ³n para consultar el resumen del sector.');
         return;
     }
 
-    // Aseguramos que el panel general est� visible
+    // Aseguramos que el panel general estÃ© visible
     vistaApp.classList.remove('d-none');
 
     try {
@@ -178,13 +186,13 @@ async function actualizarPanel() {
             ejecutarCierreSesion();
         } else {
             console.error('? Error en AccessManager:', error);
-            alert('No se pudo establecer comunicaci�n con el servidor.');
+            alert('No se pudo establecer comunicaciÃ³n con el servidor.');
         }
     }
 }
 
 // ============================================================================
-// 4. CIERRE DE SESI�N
+// 4. CIERRE DE SESIÃ“N
 // ============================================================================
 function ejecutarCierreSesion() {
     localStorage.removeItem('access_token_am');
@@ -195,16 +203,16 @@ function ejecutarCierreSesion() {
 }
 
 // ============================================================================
-// 5. EVENTOS DEL DOM EST�TICO (elementos en index.html)
+// 5. EVENTOS DEL DOM ESTÃTICO (elementos en index.html)
 // ============================================================================
 
-// Bot�n Exportar PDF Individual
+// BotÃ³n Exportar PDF Individual
 const btnExportarIndividual = document.getElementById('btnExportarIndividual');
 if (btnExportarIndividual) {
     btnExportarIndividual.addEventListener('click', exportarIndividual);
 }
 
-// Bot�n Reporte Masivo � pasa a�o y mes en el momento del clic
+// BotÃ³n Reporte Masivo â€” pasa aÃ±o y mes en el momento del clic
 const btnReporteMasivo = document.getElementById('btnReporteMasivo');
 if (btnReporteMasivo) {
     btnReporteMasivo.addEventListener('click', () => {
@@ -214,7 +222,7 @@ if (btnReporteMasivo) {
 }
 
 // ============================================================================
-// 6. ARRANQUE AUTOM�TICO si ya hay token (recarga de p�gina)
+// 6. ARRANQUE AUTOMÃTICO si ya hay token (recarga de pÃ¡gina)
 // ============================================================================
 /**
  * Muestra la fecha de hoy en el encabezado del Dashboard.
@@ -233,20 +241,31 @@ window.addEventListener('DOMContentLoaded', async () => {
         vistaApp.classList.remove('d-none');
         await inicializarEstructuraUI();
 
+        try {
+            const { fetchCurrentUserInfo } = await import('./api/apiService.js');
+            const userInfo = await fetchCurrentUserInfo();
+            const navbarEmpresa = document.getElementById('navbarNombreEmpresa');
+            if (navbarEmpresa) {
+                navbarEmpresa.innerText = 'CLIENTE: ' + userInfo.empresaNombre;
+            }
+        } catch(e) {
+            console.error('Error cargando info de usuario', e);
+        }
+
         // La pantalla inicial es el Dashboard (no el panel de asistencia)
         mostrarVista('vistaDashboard');
         setTabActivo('navDashboard');
 
-        // Bot�n 'Ver Asistencia' dentro del Dashboard
+        // BotÃ³n 'Ver Asistencia' dentro del Dashboard
         document.getElementById('btnIrAsistencia')?.addEventListener('click', () => {
             setTabActivo('navAsistencia');
             mostrarVista('vistaPanel');
         });
 
-        // Bot�n Refresh manual del Dashboard
+        // BotÃ³n Refresh manual del Dashboard
         document.getElementById('btnRefreshDashboard')?.addEventListener('click', () => {
             const sucursalId = document.getElementById('filtroDashboardSucursal')?.value;
-            // Re-dispara el change event para reutilizar la l�gica del listener
+            // Re-dispara el change event para reutilizar la lÃ³gica del listener
             const select = document.getElementById('filtroDashboardSucursal');
             if (select) select.dispatchEvent(new Event('change'));
         });
@@ -261,6 +280,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ============================================================================
 const modalSubirOffline = document.getElementById('modalSubirOffline');
 const selectOfflineSucursal = document.getElementById('offlineSucursal');
+const selectOfflineSector = document.getElementById('offlineSector');
 const formSubirOffline = document.getElementById('formSubirOffline');
 
 if (modalSubirOffline) {
@@ -270,7 +290,7 @@ if (modalSubirOffline) {
                 // fetchSucursales might be imported from apiService.js, if not it will fail
                 const { fetchSucursales } = await import('./api/apiService.js');
                 const sucursales = await fetchSucursales();
-                selectOfflineSucursal.innerHTML = '<option value=\"\">-- Seleccione Sucursal --</option>';
+                selectOfflineSucursal.innerHTML = '<option value="">-- Seleccione Sucursal --</option>';
                 sucursales.forEach(suc => {
                     const option = document.createElement('option');
                     option.value = suc.id || suc.idsucursal;
@@ -285,12 +305,44 @@ if (modalSubirOffline) {
     });
 }
 
+if (selectOfflineSucursal) {
+    selectOfflineSucursal.addEventListener('change', async () => {
+        const sucursalId = selectOfflineSucursal.value;
+        if (!sucursalId) {
+            if (selectOfflineSector) selectOfflineSector.innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
+            return;
+        }
+
+        try {
+            const { fetchSectoresPorSucursal } = await import('./api/apiService.js');
+            const sectores = await fetchSectoresPorSucursal(sucursalId);
+            
+            if (selectOfflineSector) {
+                selectOfflineSector.innerHTML = '<option value="">-- Seleccione Sector --</option>';
+                sectores.forEach(sec => {
+                    const option = document.createElement('option');
+                    option.value = sec.id;
+                    option.textContent = sec.nombre;
+                    selectOfflineSector.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error cargando sectores:', error);
+            alert('No se pudieron cargar los sectores.');
+        }
+    });
+}
+
 if (formSubirOffline) {
     formSubirOffline.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const sucursalSelect = document.getElementById('offlineSucursal');
+                const sucursalSelect = document.getElementById('offlineSucursal');
         const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const sectorSelect = document.getElementById('offlineSector');
+        const sectorId = sectorSelect ? sectorSelect.value : '';
+        const marcaSelect = document.getElementById('offlineMarca');
+        const marca = marcaSelect ? marcaSelect.value : '';
         const fileInput = document.getElementById('offlineFile');
         const file = fileInput.files[0];
 
@@ -299,14 +351,22 @@ if (formSubirOffline) {
             return;
         }
 
+        if (!sectorId) {
+            alert('Por favor, seleccione un sector antes de subir el archivo.');
+            return;
+        }
+
         if (!file) {
             alert('Por favor seleccione un archivo.');
             return;
         }
 
+        if (!marca) { alert('Por favor seleccione la marca.'); return; }
         const formData = new FormData();
+        formData.append('marca', marca);
         formData.append('file', file);
         formData.append('sucursalId', sucursalId);
+        formData.append('sectorId', sectorId);
 
         const token = localStorage.getItem('access_token_am');
         try {
@@ -347,7 +407,7 @@ if (btnLimpiarMemoria) {
         const relojId = prompt('Ingrese el ID del Reloj para limpiar su memoria (CLEAR ATTLOG):');
         if (!relojId) return;
 
-        if (!confirm('�Est� seguro de que desea limpiar la memoria f�sica de este reloj? Esto borrar� todos los fichajes almacenados en el dispositivo. Aseg�rese de que el reloj est� al d�a.')) {
+        if (!confirm('Â¿EstÃ¡ seguro de que desea limpiar la memoria fÃ­sica de este reloj? Esto borrarÃ¡ todos los fichajes almacenados en el dispositivo. AsegÃºrese de que el reloj estÃ© al dÃ­a.')) {
             return;
         }
 
@@ -373,4 +433,156 @@ if (btnLimpiarMemoria) {
         }
     });
 }
+
+// ============================================================================
+// 8. CRUD DE RELOJES
+// ============================================================================
+const modalRelojEl = document.getElementById('modalReloj');
+let modalRelojInstance = null;
+
+if (modalRelojEl) {
+    if (typeof bootstrap !== 'undefined') {
+        modalRelojInstance = new bootstrap.Modal(modalRelojEl);
+    }
+
+    modalRelojEl.addEventListener('show.bs.modal', async () => {
+        const selectSuc = document.getElementById('relojSucursal');
+        if (selectSuc && selectSuc.options.length <= 1) {
+            try {
+                const { fetchSucursales } = await import('./api/apiService.js');
+                const sucursales = await fetchSucursales();
+                selectSuc.innerHTML = '<option value="">-- Seleccione Sucursal --</option>';
+                sucursales.forEach(suc => {
+                    const option = document.createElement('option');
+                    option.value = suc.id || suc.idsucursal;
+                    option.textContent = suc.nombre;
+                    selectSuc.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando sucursales:', error);
+            }
+        }
+    });
+}
+
+const relojSucursalSelect = document.getElementById('relojSucursal');
+const relojSectorSelect = document.getElementById('relojSector');
+
+if (relojSucursalSelect) {
+    relojSucursalSelect.addEventListener('change', async () => {
+        const sucursalId = relojSucursalSelect.value;
+        if (!sucursalId) {
+            if (relojSectorSelect) relojSectorSelect.innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
+            return;
+        }
+
+        try {
+            const { fetchSectoresPorSucursal } = await import('./api/apiService.js');
+            const sectores = await fetchSectoresPorSucursal(sucursalId);
+            
+            if (relojSectorSelect) {
+                relojSectorSelect.innerHTML = '<option value="">-- Seleccione Sector --</option>';
+                sectores.forEach(sec => {
+                    const option = document.createElement('option');
+                    option.value = sec.id;
+                    option.textContent = sec.nombre;
+                    relojSectorSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error cargando sectores:', error);
+        }
+    });
+}
+
+document.getElementById('btnNuevoReloj')?.addEventListener('click', () => {
+    document.getElementById('formReloj')?.reset();
+    if (relojSectorSelect) {
+        relojSectorSelect.innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
+    }
+    if (modalRelojInstance) modalRelojInstance.show();
+});
+
+document.getElementById('btnGuardarReloj')?.addEventListener('click', async () => {
+    const form = document.getElementById('formReloj');
+    if (!form) return;
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const nombre = document.getElementById('relojNombre').value.trim();
+    const marca = document.getElementById('relojMarca').value.trim();
+    const numeroSerie = document.getElementById('relojNumeroSerie').value.trim();
+    const sucursalId = document.getElementById('relojSucursal').value;
+    const sectorId = document.getElementById('relojSector').value;
+
+    const token = localStorage.getItem('access_token_am');
+    const payload = { nombre, marca, numeroSerie, sucursalId, sectorId };
+
+    try {
+        const response = await fetch('/api/relojes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert('Reloj guardado exitosamente.');
+            if (modalRelojInstance) modalRelojInstance.hide();
+            cargarRelojesUI();
+        } else {
+            alert('Error al guardar el reloj.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de red al guardar el reloj.');
+    }
+});
+
+window.cargarRelojesUI = async function() {
+    const token = localStorage.getItem('access_token_am');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/relojes', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!response.ok) return;
+
+        const relojes = await response.json();
+        const tbody = document.getElementById('tablaCuerpoRelojes');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (relojes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay relojes registrados.</td></tr>';
+            return;
+        }
+
+        relojes.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${r.id}</td>
+                <td class="fw-bold">${r.numeroSerie || ''}</td>
+                <td>${r.nombre || r.descripcion || ''} <span class="badge bg-secondary ms-2">${r.marca || ''}</span></td>
+                <td>${r.ultimaConexion ? new Date(r.ultimaConexion).toLocaleString() : '<span class="text-muted">Nunca</span>'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error cargando relojes:', error);
+    }
+};
+
+
+
+
+
+
+
 

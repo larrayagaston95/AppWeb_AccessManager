@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // tableRenderer.js
 // Renderiza el contenido de la tabla de asistencia en dos modos:
 //   - INDIVIDUAL: detalle día a día de un empleado
@@ -34,7 +34,7 @@ function actualizarCabeceras(modo) {
     thead.innerHTML = modo === 'individual' ? COL_INDIVIDUAL : COL_SECTOR;
 }
 
-// ── MODO INDIVIDUAL ──────────────────────────────────────────────────────────
+// â”€â”€ MODO INDIVIDUAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Renderiza la tabla de fichajes diarios de un empleado.
@@ -131,7 +131,7 @@ export function renderizarTablaAsistencia(datos) {
     }).join('');
 }
 
-// ── MODO SECTOR (RESUMEN CONSOLIDADO) ────────────────────────────────────────
+// â”€â”€ MODO SECTOR (RESUMEN CONSOLIDADO) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Renderiza la tabla de resumen del sector: un renglón por empleado con totales.
@@ -169,6 +169,7 @@ export function renderTableSector(data) {
     }).join('');
 }
 
-// ── ALIAS RETROCOMPATIBLE ─────────────────────────────────────────────────────
+// â”€â”€ ALIAS RETROCOMPATIBLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Para no romper código existente que importaba renderTable()
 export const renderTable = renderTableIndividual;
+

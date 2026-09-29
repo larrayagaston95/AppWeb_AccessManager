@@ -43,11 +43,31 @@ public class HikvisionSyncController {
         
         if (relojOpt.isPresent()) {
             Reloj reloj = relojOpt.get();
+            
+            // Actualizar la fecha y hora de la última conexión del equipo físico
+            reloj.setUltimaConexion(LocalDateTime.now());
+            relojRepository.save(reloj);
 
             // 4. Registro: Guardar la Fichada
             Fichada fichada = new Fichada();
             fichada.setLegajoReloj(legajo);
-            fichada.setFechaHora(LocalDateTime.now()); // Se puede extraer del payload mas adelante
+            
+            // Extraer y parsear la hora real de la fichada desde el payload
+            String timeStr = extraerValor(payload, "time", "authDateTime", "datetime");
+            if (timeStr != null && !timeStr.isEmpty()) {
+                try {
+                    // Hikvision suele enviar formato "yyyy-MM-dd HH:mm:ss" o "yyyy-MM-ddTHH:mm:ss"
+                    String cleanTime = timeStr.replace("T", " ");
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    fichada.setFechaHora(LocalDateTime.parse(cleanTime, formatter));
+                } catch (Exception e) {
+                    System.out.println("Error parseando timeStr: " + timeStr + ". Usando hora actual.");
+                    fichada.setFechaHora(LocalDateTime.now());
+                }
+            } else {
+                fichada.setFechaHora(LocalDateTime.now());
+            }
+
             fichada.setReloj(reloj);
             fichada.setModoVerificacion("HIKVISION_API");
             

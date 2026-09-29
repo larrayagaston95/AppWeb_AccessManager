@@ -67,8 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login").permitAll()
                 // ZKTeco Hardware Integration ADMS
                 .requestMatchers("/iclock/**").permitAll()
-                // Hikvision Hardware Integration ISAPI
-                .requestMatchers("/api/hardware/hikvision/**").permitAll()
+                // Hardware webhooks and synchronization (sin JWT desde los relojes fisicos)
+                .requestMatchers("/api/hardware/**").permitAll()
                 // Endpoint de prueba de calculo
                 .requestMatchers("/api/calculo/**").permitAll()
                 // Reportes (abierto temporalmente para el frontend)

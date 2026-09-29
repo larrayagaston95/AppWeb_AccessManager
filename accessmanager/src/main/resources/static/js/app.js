@@ -567,10 +567,10 @@ window.cargarRelojesUI = async function() {
         relojes.forEach(r => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${r.id}</td>
-                <td class="fw-bold">${r.numeroSerie || ''}</td>
-                <td>${r.nombre || r.descripcion || ''} <span class="badge bg-secondary ms-2">${r.marca || ''}</span></td>
-                <td>${r.ultimaConexion ? new Date(r.ultimaConexion).toLocaleString() : '<span class="text-muted">Nunca</span>'}</td>
+                <td class="text-light">${r.id}</td>
+                <td class="fw-bold text-light">${r.numeroSerie || ''}</td>
+                <td class="text-light">${r.nombre || r.descripcion || ''} <span class="badge bg-secondary ms-2">${r.marca || ''}</span></td>
+                <td class="text-light">${r.ultimaConexion ? `<span class="text-white fw-bold">${new Date(r.ultimaConexion).toLocaleString()}</span>` : '<span class="badge bg-danger text-white">Sin conexión</span>'}</td>
             `;
             tbody.appendChild(tr);
         });

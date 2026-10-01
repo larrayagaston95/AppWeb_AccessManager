@@ -104,8 +104,9 @@ public class HardwareSyncService {
                         fichada.setModoVerificacion(campos[3]);
                     }
 
-                    fichadaRepository.save(fichada);
-                    System.out.println("   [EXITO] Fichaje guardado en base de datos.");
+                    // INYECCIÓN MAESTRA: Se reemplaza el insert crudo por el motor de cálculo de horas.
+                    asistenciaService.guardarFichada(fichada);
+                    System.out.println("   [EXITO] Fichaje ZKTeco guardado y horas procesadas.");
 
                 } catch (Exception e) {
                     System.out.println("   [ERROR] No se pudo parsear o guardar la fecha/hora: " + e.getMessage());
@@ -187,8 +188,9 @@ public class HardwareSyncService {
             fichada.setReloj(reloj);
             fichada.setModoVerificacion("HIKVISION_ISAPI");
 
-            fichadaRepository.save(fichada);
-            System.out.println("   [EXITO] Fichaje Hikvision guardado en BD.");
+            // INYECCIÓN MAESTRA: Evitar el insert huérfano. Mandar al motor de cálculo.
+            asistenciaService.guardarFichada(fichada);
+            System.out.println("   [EXITO] Fichaje Hikvision guardado y horas procesadas en BD.");
         } catch (Exception e) {
             System.out.println("   [ERROR] Procesando payload Hikvision: " + e.getMessage());
         }

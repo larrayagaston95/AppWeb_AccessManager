@@ -34,3 +34,32 @@ export async function createLicencia(payload) {
     
     return await response.json();
 }
+
+export async function updateLicencia(id, payload) {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al actualizar la licencia');
+    }
+    
+    return await response.json();
+}
+
+export async function deleteLicencia(id) {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al eliminar la licencia');
+    }
+    
+    return await response.json();
+}

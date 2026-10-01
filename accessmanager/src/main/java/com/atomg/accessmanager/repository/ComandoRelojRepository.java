@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ComandoRelojRepository extends JpaRepository<ComandoReloj, Long> {
     List<ComandoReloj> findByRelojIdAndEjecutadoFalseOrderByFechaCreacionAsc(Long relojId);
+    List<ComandoReloj> findByRelojId(Long relojId);
 }

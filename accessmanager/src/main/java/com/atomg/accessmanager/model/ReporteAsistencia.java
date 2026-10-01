@@ -18,7 +18,7 @@ public class ReporteAsistencia {
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DATE")
     private LocalDate fecha;
 
     private LocalDateTime entrada;

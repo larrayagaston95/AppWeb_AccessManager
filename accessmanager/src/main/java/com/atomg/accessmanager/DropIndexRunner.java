@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
+// @Component // Comentado para evitar que intente borrar el índice cada vez que arranca la app
 public class DropIndexRunner implements CommandLineRunner {
 
     @Autowired

@@ -58,17 +58,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/hardware/**", "/iclock/**")
+                .disable()
+            )
             // Usamos el bean CorsConfigurationSource definido arriba
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Endpoints publicos
-                .requestMatchers("/api/auth/login").permitAll()
-                // ZKTeco Hardware Integration ADMS
-                .requestMatchers("/iclock/**").permitAll()
-                // Hardware webhooks and synchronization (sin JWT desde los relojes fisicos)
-                .requestMatchers("/api/hardware/**").permitAll()
+                // Endpoints públicos y Login FluxTech
+                .requestMatchers("/api/auth/**").permitAll()
+                // Hardware webhooks (Hikvision / ZKTeco ADMS) sin JWT
+                .requestMatchers("/api/hardware/**", "/iclock/**").permitAll()
                 // Endpoint de prueba de calculo
                 .requestMatchers("/api/calculo/**").permitAll()
                 // Reportes (abierto temporalmente para el frontend)

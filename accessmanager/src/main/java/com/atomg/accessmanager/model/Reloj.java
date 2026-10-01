@@ -42,4 +42,14 @@ public class Reloj {
 
     @Column(name = "ultima_conexion")
     private java.time.LocalDateTime ultimaConexion;
+
+    // Configuración Avanzada (Red Local / VPN) para FluxTech
+    @Column(name = "ip")
+    private String ip;
+
+    @Column(name = "usuario")
+    private String usuario;
+
+    @Column(name = "password")
+    private String password;
 }

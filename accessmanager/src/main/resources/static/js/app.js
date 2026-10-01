@@ -12,14 +12,14 @@ import { initEmpleadosUI } from './components/empleadosUI.js';
 const vistaApp   = document.getElementById('vistaApp');
 const vistaPanel = document.getElementById('vistaPanel');
 
-// Mapa de texto de mes ? nÃºmero
+// Mapa de texto de mes ? número
 const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
 
 // ============================================================================
-// 1. INICIALIZACIÃ“N DE ESTRUCTURA UI (UNA SOLA VEZ por sesiÃ³n)
+// 1. INICIALIZACIÓN DE ESTRUCTURA UI (UNA SOLA VEZ por sesión)
 // ============================================================================
 async function inicializarEstructuraUI() {
     renderHeader(ejecutarCierreSesion);
@@ -28,18 +28,18 @@ async function inicializarEstructuraUI() {
     vincularNavegacionSPA();
     await inicializarCombosInteligentes();
     await initEmpleadosUI();
-    await initDashboard();       // MÃ³dulo 1: Dashboard en tiempo real
+    await initDashboard();       // Módulo 1: Dashboard en tiempo real
     actualizarFechaDashboard();  // Muestra la fecha de hoy en el encabezado
 }
 
 /**
- * Conecta los tabs de navegaciÃ³n principal
+ * Conecta los tabs de navegación principal
  */
 /**
- * Helpers de navegaciÃ³n SPA: activa un tab y desactiva los demÃ¡s.
+ * Helpers de navegación SPA: activa un tab y desactiva los demás.
  */
 function setTabActivo(idTab) {
-    ['navDashboard', 'navAsistencia', 'navPersonal', 'navRelojes'].forEach(id => {
+    ['navDashboard', 'navAsistencia', 'navPersonal', 'navRelojes', 'navHistorial'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === idTab) {
@@ -53,16 +53,16 @@ function setTabActivo(idTab) {
 }
 
 function mostrarVista(vistaId) {
-    const vistas = ['vistaDashboard', 'vistaPanel', 'vistaEmpleados', 'vistaRelojes'];
+    const vistas = ['vistaDashboard', 'vistaPanel', 'vistaEmpleados', 'vistaRelojes', 'vistaHistorial'];
     vistas.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === vistaId) {
             el.classList.remove('d-none');
-            if (id === 'vistaEmpleados' || id === 'vistaRelojes') el.classList.add('d-flex');
+            if (id === 'vistaEmpleados' || id === 'vistaRelojes' || id === 'vistaHistorial') el.classList.add('d-flex');
         } else {
             el.classList.add('d-none');
-            if (id === 'vistaEmpleados' || id === 'vistaRelojes') el.classList.remove('d-flex');
+            if (id === 'vistaEmpleados' || id === 'vistaRelojes' || id === 'vistaHistorial') el.classList.remove('d-flex');
         }
     });
     // La barra de filtros de asistencia solo es visible en vistaPanel
@@ -77,6 +77,7 @@ function vincularNavegacionSPA() {
     const navAsistencia = document.getElementById('navAsistencia');
     const navPersonal   = document.getElementById('navPersonal');
     const navRelojes    = document.getElementById('navRelojes');
+    const navHistorial  = document.getElementById('navHistorial');
 
     navDashboard?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -102,11 +103,18 @@ function vincularNavegacionSPA() {
         mostrarVista('vistaRelojes');
         if (typeof cargarRelojesUI === 'function') cargarRelojesUI();
     });
+
+    navHistorial?.addEventListener('click', (e) => {
+        e.preventDefault();
+        setTabActivo('navHistorial');
+        mostrarVista('vistaHistorial');
+        if (typeof cargarHistorialUI === 'function') cargarHistorialUI();
+    });
 }
 
 /**
- * Conecta el botÃ³n #btnFiltrar del header dinÃ¡mico.
- * Se llama despuÃ©s de renderHeader() con flag anti-duplicado.
+ * Conecta el botón #btnFiltrar del header dinámico.
+ * Se llama después de renderHeader() con flag anti-duplicado.
  */
 function vincularBtnFiltrarHeader() {
     const btn = document.getElementById('btnFiltrar');
@@ -135,22 +143,22 @@ function leerFiltros() {
 }
 
 // ============================================================================
-// 3. ACTUALIZAR PANEL â€” LÃ³gica dual:
+// 3. ACTUALIZAR PANEL — Lógica dual:
 //    - Con legajo ? Modo Individual (fichadas diarias)
 //    - Sin legajo ? Modo Sector     (resumen consolidado)
 // ============================================================================
 async function actualizarPanel() {
     const { legajo, sectorId, anio, mesNumero } = leerFiltros();
 
-    // Determinamos el modo segÃºn si hay empleado seleccionado
+    // Determinamos el modo según si hay empleado seleccionado
     const modoIndividual = legajo !== '';
 
     if (!modoIndividual && !sectorId) {
-        alert('Por favor seleccione al menos una SecciÃ³n para consultar el resumen del sector.');
+        alert('Por favor seleccione al menos una Sección para consultar el resumen del sector.');
         return;
     }
 
-    // Aseguramos que el panel general estÃ© visible
+    // Aseguramos que el panel general esté visible
     vistaApp.classList.remove('d-none');
 
     try {
@@ -186,13 +194,13 @@ async function actualizarPanel() {
             ejecutarCierreSesion();
         } else {
             console.error('? Error en AccessManager:', error);
-            alert('No se pudo establecer comunicaciÃ³n con el servidor.');
+            alert('No se pudo establecer comunicación con el servidor.');
         }
     }
 }
 
 // ============================================================================
-// 4. CIERRE DE SESIÃ“N
+// 4. CIERRE DE SESIÓN
 // ============================================================================
 function ejecutarCierreSesion() {
     localStorage.removeItem('access_token_am');
@@ -203,16 +211,16 @@ function ejecutarCierreSesion() {
 }
 
 // ============================================================================
-// 5. EVENTOS DEL DOM ESTÃTICO (elementos en index.html)
+// 5. EVENTOS DEL DOM ESTÁTICO (elementos en index.html)
 // ============================================================================
 
-// BotÃ³n Exportar PDF Individual
+// Botón Exportar PDF Individual
 const btnExportarIndividual = document.getElementById('btnExportarIndividual');
 if (btnExportarIndividual) {
     btnExportarIndividual.addEventListener('click', exportarIndividual);
 }
 
-// BotÃ³n Reporte Masivo â€” pasa aÃ±o y mes en el momento del clic
+// Botón Reporte Masivo — pasa año y mes en el momento del clic
 const btnReporteMasivo = document.getElementById('btnReporteMasivo');
 if (btnReporteMasivo) {
     btnReporteMasivo.addEventListener('click', () => {
@@ -222,7 +230,7 @@ if (btnReporteMasivo) {
 }
 
 // ============================================================================
-// 6. ARRANQUE AUTOMÃTICO si ya hay token (recarga de pÃ¡gina)
+// 6. ARRANQUE AUTOMÁTICO si ya hay token (recarga de página)
 // ============================================================================
 /**
  * Muestra la fecha de hoy en el encabezado del Dashboard.
@@ -256,16 +264,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         mostrarVista('vistaDashboard');
         setTabActivo('navDashboard');
 
-        // BotÃ³n 'Ver Asistencia' dentro del Dashboard
+        // Botón 'Ver Asistencia' dentro del Dashboard
         document.getElementById('btnIrAsistencia')?.addEventListener('click', () => {
             setTabActivo('navAsistencia');
             mostrarVista('vistaPanel');
         });
 
-        // BotÃ³n Refresh manual del Dashboard
+        // Botón Refresh manual del Dashboard
         document.getElementById('btnRefreshDashboard')?.addEventListener('click', () => {
             const sucursalId = document.getElementById('filtroDashboardSucursal')?.value;
-            // Re-dispara el change event para reutilizar la lÃ³gica del listener
+            // Re-dispara el change event para reutilizar la lógica del listener
             const select = document.getElementById('filtroDashboardSucursal');
             if (select) select.dispatchEvent(new Event('change'));
         });
@@ -407,7 +415,7 @@ if (btnLimpiarMemoria) {
         const relojId = prompt('Ingrese el ID del Reloj para limpiar su memoria (CLEAR ATTLOG):');
         if (!relojId) return;
 
-        if (!confirm('Â¿EstÃ¡ seguro de que desea limpiar la memoria fÃ­sica de este reloj? Esto borrarÃ¡ todos los fichajes almacenados en el dispositivo. AsegÃºrese de que el reloj estÃ© al dÃ­a.')) {
+        if (!confirm('¿Está seguro de que desea limpiar la memoria física de este reloj? Esto borrará todos los fichajes almacenados en el dispositivo. Asegúrese de que el reloj esté al día.')) {
             return;
         }
 
@@ -497,11 +505,94 @@ if (relojSucursalSelect) {
 
 document.getElementById('btnNuevoReloj')?.addEventListener('click', () => {
     document.getElementById('formReloj')?.reset();
+    document.getElementById('relojId').value = '';
+    document.getElementById('modalRelojLabel').innerHTML = '<i class="bi bi-clock me-2"></i>Registrar Nuevo Reloj';
     if (relojSectorSelect) {
         relojSectorSelect.innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
     }
     if (modalRelojInstance) modalRelojInstance.show();
 });
+
+window.editarReloj = async (id) => {
+    const reloj = window.relojesCargados?.find(r => r.id === id);
+    if (!reloj) return;
+
+    document.getElementById('formReloj').reset();
+    document.getElementById('relojId').value = reloj.id;
+    document.getElementById('relojNombre').value = reloj.nombre || '';
+    document.getElementById('relojMarca').value = reloj.marca || '';
+    document.getElementById('relojNumeroSerie').value = reloj.numeroSerie || '';
+    document.getElementById('relojIp').value = reloj.ip || '';
+    document.getElementById('relojUsuario').value = reloj.usuario || '';
+    document.getElementById('relojPassword').value = reloj.password || '';
+    document.getElementById('modalRelojLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Reloj';
+
+    const selectSuc = document.getElementById('relojSucursal');
+    if (selectSuc && selectSuc.options.length <= 1) {
+        try {
+            const { fetchSucursales } = await import('./api/apiService.js');
+            const sucursales = await fetchSucursales();
+            selectSuc.innerHTML = '<option value="">-- Seleccione Sucursal --</option>';
+            sucursales.forEach(suc => {
+                const option = document.createElement('option');
+                option.value = suc.id || suc.idsucursal;
+                option.textContent = suc.nombre;
+                selectSuc.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error cargando sucursales:', error);
+        }
+    }
+    
+    if (reloj.sucursal && reloj.sucursal.id) {
+        document.getElementById('relojSucursal').value = reloj.sucursal.id;
+        
+        try {
+            const { fetchSectoresPorSucursal } = await import('./api/apiService.js');
+            const sectores = await fetchSectoresPorSucursal(reloj.sucursal.id);
+            const selectSec = document.getElementById('relojSector');
+            selectSec.innerHTML = '<option value="">-- Seleccione Sector --</option>';
+            sectores.forEach(sec => {
+                const option = document.createElement('option');
+                option.value = sec.id;
+                option.textContent = sec.nombre;
+                selectSec.appendChild(option);
+            });
+            
+            if (reloj.sector && reloj.sector.id) {
+                selectSec.value = reloj.sector.id;
+            }
+        } catch (error) {
+            console.error('Error cargando sectores:', error);
+        }
+    } else {
+        document.getElementById('relojSector').innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
+    }
+
+    if (modalRelojInstance) modalRelojInstance.show();
+};
+
+window.eliminarReloj = async (id) => {
+    if (!confirm('¿Está seguro de eliminar este reloj de hardware? Perderá la conexión con el dispositivo.')) return;
+    
+    const token = localStorage.getItem('access_token_am');
+    try {
+        const response = await fetch(`/api/relojes/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (response.ok) {
+            alert('Reloj eliminado exitosamente.');
+            cargarRelojesUI();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            alert(err.error || 'Error al eliminar el reloj.');
+        }
+    } catch (e) {
+        alert('Error de red al intentar eliminar.');
+    }
+};
 
 document.getElementById('btnGuardarReloj')?.addEventListener('click', async () => {
     const form = document.getElementById('formReloj');
@@ -517,13 +608,20 @@ document.getElementById('btnGuardarReloj')?.addEventListener('click', async () =
     const numeroSerie = document.getElementById('relojNumeroSerie').value.trim();
     const sucursalId = document.getElementById('relojSucursal').value;
     const sectorId = document.getElementById('relojSector').value;
+    const ip = document.getElementById('relojIp').value.trim();
+    const usuario = document.getElementById('relojUsuario').value.trim();
+    const password = document.getElementById('relojPassword').value.trim();
 
+    const relojId = document.getElementById('relojId').value;
     const token = localStorage.getItem('access_token_am');
-    const payload = { nombre, marca, numeroSerie, sucursalId, sectorId };
+    const payload = { nombre, marca, numeroSerie, sucursalId, sectorId, ip, usuario, password };
 
     try {
-        const response = await fetch('/api/relojes', {
-            method: 'POST',
+        const url = relojId ? `/api/relojes/${relojId}` : '/api/relojes';
+        const method = relojId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -555,12 +653,13 @@ window.cargarRelojesUI = async function() {
         if (!response.ok) return;
 
         const relojes = await response.json();
+        window.relojesCargados = relojes;
         const tbody = document.getElementById('tablaCuerpoRelojes');
         if (!tbody) return;
 
         tbody.innerHTML = '';
         if (relojes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay relojes registrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay relojes registrados.</td></tr>';
             return;
         }
 
@@ -570,7 +669,19 @@ window.cargarRelojesUI = async function() {
                 <td class="text-light">${r.id}</td>
                 <td class="fw-bold text-light">${r.numeroSerie || ''}</td>
                 <td class="text-light">${r.nombre || r.descripcion || ''} <span class="badge bg-secondary ms-2">${r.marca || ''}</span></td>
-                <td class="text-light">${r.ultimaConexion ? `<span class="text-white fw-bold">${new Date(r.ultimaConexion).toLocaleString()}</span>` : '<span class="badge bg-danger text-white">Sin conexión</span>'}</td>
+                <td class="text-light">${r.ultimaConexion ? `<span class="text-white fw-bold">${r.ultimaConexion.replace('T', ' ').substring(0, 16)}</span>` : '<span class="badge bg-danger text-white">Sin conexión</span>'}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-info me-1 shadow-sm" onclick="window.editarReloj(${r.id})" title="Editar">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger me-1 shadow-sm" onclick="window.eliminarReloj(${r.id})" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    ${r.marca === 'Hikvision' ? `
+                    <button class="btn btn-sm btn-danger shadow-sm" onclick="window.formatearReloj(${r.id})" title="Formatear Memoria">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </button>` : ''}
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -578,6 +689,70 @@ window.cargarRelojesUI = async function() {
         console.error('Error cargando relojes:', error);
     }
 };
+
+window.formatearReloj = async (id) => {
+    if (!confirm('CUIDADO: Esto se conectará al reloj y borrará todas las fichadas físicas en su interior. Requiere que el servidor tenga acceso a la IP local del reloj.\n\n¿Desea continuar?')) return;
+    
+    const token = localStorage.getItem('access_token_am');
+    try {
+        const response = await fetch(`/api/relojes/${id}/formatear-hardware`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (response.ok) {
+            alert('Formateo exitoso. Se ha limpiado la memoria física del equipo (Protocolo ISAPI).');
+            cargarRelojesUI();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            alert(err.error || 'Error de red local. Verifique configuración de IP/Usuario/Contraseña y asegúrese de que el servidor (FluxTech) llegue a la IP local del reloj.');
+        }
+    } catch (e) {
+        alert('Falla crítica al conectar. Revise red local.');
+    }
+};
+
+window.cargarHistorialUI = async function() {
+    const token = localStorage.getItem('access_token_am');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/fichadas/historial', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!response.ok) return;
+
+        const fichadas = await response.json();
+        const tbody = document.getElementById('tablaCuerpoHistorial');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (fichadas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay fichadas registradas.</td></tr>';
+            return;
+        }
+
+        fichadas.forEach(f => {
+            const tr = document.createElement('tr');
+            // ⚠️ NO usar new Date() — renderizamos el string crudo del backend para evitar offset de TZ
+            const fecha = f.fechaHora ? f.fechaHora.replace('T', ' ').substring(0, 16) : '';
+            tr.innerHTML = `
+                <td class="text-light">${fecha}</td>
+                <td class="fw-bold text-light">${f.legajo || ''}</td>
+                <td class="text-light">${f.empleadoNombre || ''}</td>
+                <td class="text-light">${f.reloj || ''}</td>
+                <td class="text-light"><span class="badge bg-secondary">${f.modo || ''}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error cargando historial:', error);
+    }
+};
+
+document.getElementById('btnRefreshHistorial')?.addEventListener('click', () => {
+    if (typeof cargarHistorialUI === 'function') cargarHistorialUI();
+});
 
 
 

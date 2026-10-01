@@ -85,11 +85,11 @@
             </main>
         </div>
 
-        <!-- â”€â”€ VISTA PANEL (Reportes) â”€â”€ -->
+        <!-- ── VISTA PANEL (Reportes) ── -->
         <div id="vistaPanel" class="flex-grow-1 d-flex flex-column">
             <main class="container-fluid px-4 flex-grow-1">
 
-                <!-- BOTONERA DE EXPORTACIÃ“N (siempre visible en el panel) -->
+                <!-- BOTONERA DE EXPORTACIÓN (siempre visible en el panel) -->
                 <div class="row g-3 mb-4 justify-content-end">
                     <div class="col-md-6 d-flex gap-2 justify-content-end">
                         <button id="btnExportarIndividual" class="btn btn-danger fw-bold px-4">
@@ -131,7 +131,7 @@
             </main>
         </div>
 
-        <!-- â”€â”€ VISTA EMPLEADOS (CRUD) â”€â”€ -->
+        <!-- ── VISTA EMPLEADOS (CRUD) ── -->
         <div id="vistaEmpleados" class="d-none flex-grow-1 flex-column">
             <main class="container-fluid px-4 flex-grow-1 mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -187,6 +187,7 @@
                             <th class="text-turquoise">Nº Serie</th>
                             <th class="text-turquoise">Descripción</th>
                             <th class="text-turquoise">Última Conexión</th>
+                            <th class="text-turquoise text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCuerpoRelojes">
@@ -195,6 +196,39 @@
                 </table>
             </div>
         </div>
+        
+        <!-- VISTA HISTORIAL FICHADAS -->
+        <div id="vistaHistorial" class="d-none flex-grow-1 flex-column">
+            <main class="container-fluid px-4 flex-grow-1 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold text-white mb-0">
+                        <i class="bi bi-clock-history me-2 text-turquoise"></i>Historial de Fichadas Crudas
+                    </h4>
+                    <button id="btnRefreshHistorial" class="btn btn-outline-info fw-bold px-3">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                    </button>
+                </div>
+                <div class="table-responsive table-custom p-3 mb-5 bg-dark-card rounded shadow border border-secondary">
+                    <table class="table table-dark table-hover align-middle mb-0" id="tablaHistorialUI">
+                        <thead>
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Legajo</th>
+                                <th>Empleado (Nombre)</th>
+                                <th>Reloj</th>
+                                <th>Modo de Verificación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCuerpoHistorial">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Cargando historial...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+
         <footer id="mainFooter" class="mt-auto"></footer>
     </div>
 
@@ -290,6 +324,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form id="formLicencia">
+                        <input type="hidden" id="licId" name="licId">
                         <input type="hidden" id="licEmpleadoId" name="licEmpleadoId">
                         <p class="mb-3 text-muted small" id="licEmpleadoNombre"></p>
 
@@ -323,14 +358,39 @@
                             <textarea class="form-control bg-dark text-white border-secondary" id="licObservaciones"
                                 rows="2" placeholder="Opcional..."></textarea>
                         </div>
+                        
+                        <div class="text-end mb-4">
+                            <button type="button" class="btn btn-warning text-dark fw-bold btn-sm" id="btnGuardarLicencia">
+                                <i class="bi bi-save me-1"></i> Guardar Licencia
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary fw-bold btn-sm d-none" id="btnCancelarEdicionLicencia" onclick="window.cancelarEdicionLicencia()">
+                                Cancelar Edición
+                            </button>
+                        </div>
                     </form>
+
+                    <hr class="border-secondary">
+
+                    <h6 class="fw-bold text-turquoise mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Licencias</h6>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-bordered align-middle text-center shadow-sm" style="font-size: 0.85rem;">
+                            <thead class="table-secondary text-dark">
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCuerpoLicencias">
+                                <!-- Filas de historial -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="modal-footer border-top border-secondary">
                     <button type="button" class="btn btn-outline-secondary fw-bold"
-                        data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning text-dark fw-bold" id="btnGuardarLicencia">
-                        <i class="bi bi-save me-1"></i> Guardar Licencia
-                    </button>
+                        data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -412,6 +472,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form id="formReloj">
+                        <input type="hidden" id="relojId" name="relojId">
                         <div class="mb-3">
                             <label class="form-label text-light small fw-bold">Nombre *</label>
                             <input type="text" class="form-control bg-dark text-white border-secondary" id="relojNombre" required>
@@ -439,6 +500,30 @@
                             <select id="relojSector" class="form-select bg-dark text-light border-secondary" required>
                                 <option value="">-- Seleccione Sucursal Primero --</option>
                             </select>
+                        </div>
+                        
+                        <!-- Configuración Avanzada FluxTech -->
+                        <div class="mt-4 border-top border-secondary pt-3">
+                            <a class="text-info text-decoration-none fw-bold" data-bs-toggle="collapse" href="#collapseAvanzada" role="button" aria-expanded="false" aria-controls="collapseAvanzada">
+                                <i class="bi bi-gear-fill me-1"></i> Configuración Avanzada (Red Local / VPN)
+                            </a>
+                            <div class="collapse mt-3" id="collapseAvanzada">
+                                <div class="card card-body bg-dark border-secondary p-3">
+                                    <div class="mb-2">
+                                        <label class="form-label text-light small fw-bold">IP LAN</label>
+                                        <input type="text" class="form-control bg-dark text-white border-secondary form-control-sm" id="relojIp" placeholder="Ej: 192.168.1.100">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label text-light small fw-bold">Usuario (ISAPI)</label>
+                                        <input type="text" class="form-control bg-dark text-white border-secondary form-control-sm" id="relojUsuario" placeholder="admin">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label text-light small fw-bold">Contraseña</label>
+                                        <input type="password" class="form-control bg-dark text-white border-secondary form-control-sm" id="relojPassword">
+                                    </div>
+                                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i> Solo necesario para opciones de formateo físico.</small>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>

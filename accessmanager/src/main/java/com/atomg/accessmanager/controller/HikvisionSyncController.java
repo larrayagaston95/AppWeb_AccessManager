@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 @RestController
@@ -24,17 +25,19 @@ public class HikvisionSyncController {
     @PostMapping("/sync")
     public ResponseEntity<String> syncAttendance(@RequestBody String payload) {
         // 1. Inspeccionar el payload (como String genérico para detectar JSON/XML)
-        System.out.println("=== Payload recibido de Hikvision ===");
+        System.out.println("=== [DEBUG] Payload recibido de Hikvision ===");
         System.out.println(payload);
-        System.out.println("=====================================");
+        System.out.println("=============================================");
 
         // 2. Extraer el Número de Serie del equipo y el Legajo del empleado
         String numeroSerie = extraerValor(payload, "serialNo", "serialNumber", "deviceSerialNumber", "macAddress", "MACAddr");
         String legajo = extraerValor(payload, "employeeNoString", "employeeNo", "employeeId", "user");
 
+        System.out.println("[DEBUG] numeroSerie extraído: " + numeroSerie);
+        System.out.println("[DEBUG] legajo extraído: " + legajo);
+
         if (numeroSerie == null || legajo == null) {
-             System.out.println("No se pudo extraer el numero de serie o legajo del payload.");
-             // Respondemos 200 OK de todos modos para que el reloj no se trabe reintentando infinitamente
+             System.out.println("[DEBUG] No se pudo extraer el numero de serie o legajo del payload. Abortando.");
              return ResponseEntity.ok("OK");
         }
 
@@ -43,9 +46,12 @@ public class HikvisionSyncController {
         
         if (relojOpt.isPresent()) {
             Reloj reloj = relojOpt.get();
+            System.out.println("[DEBUG] Reloj encontrado en BD: ID=" + reloj.getId() + " | NumeroSerie=" + reloj.getNumeroSerie());
             
             // Actualizar la fecha y hora de la última conexión del equipo físico
-            reloj.setUltimaConexion(LocalDateTime.now());
+            LocalDateTime ahora = LocalDateTime.now(ZoneId.of("America/Argentina/Cordoba"));
+            System.out.println("[DEBUG] LocalDateTime.now(Cordoba) para ultimaConexion = " + ahora);
+            reloj.setUltimaConexion(ahora);
             relojRepository.save(reloj);
 
             // 4. Registro: Guardar la Fichada
@@ -54,17 +60,23 @@ public class HikvisionSyncController {
             
             // Extraer y parsear la hora real de la fichada desde el payload
             String timeStr = extraerValor(payload, "time", "authDateTime", "datetime");
+            System.out.println("[DEBUG] String de hora RAW extraído del payload (timeStr): '" + timeStr + "'");
+
             if (timeStr != null && !timeStr.isEmpty()) {
                 try {
-                    // Hikvision suele enviar formato "yyyy-MM-dd HH:mm:ss" o "yyyy-MM-ddTHH:mm:ss"
                     String cleanTime = timeStr.replace("T", " ");
-                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    fichada.setFechaHora(LocalDateTime.parse(cleanTime, formatter));
+                    System.out.println("[DEBUG] String de hora limpio (cleanTime): '" + cleanTime + "'");
+                    // 'yyyy-M-d H:m:s' es flexible: soporta tanto "2026-09-08 08:30:05" como "2026-9-8 8:30:5"
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-M-d H:m:s");
+                    LocalDateTime fechaHoraParsed = LocalDateTime.parse(cleanTime, formatter);
+                    System.out.println("[DEBUG] LocalDateTime tras parseo: " + fechaHoraParsed);
+                    fichada.setFechaHora(fechaHoraParsed);
                 } catch (Exception e) {
-                    System.out.println("Error parseando timeStr: " + timeStr + ". Usando hora actual.");
+                    System.out.println("[DEBUG] ERROR parseando timeStr: '" + timeStr + "'. Causa: " + e.getMessage() + ". Usando hora actual.");
                     fichada.setFechaHora(LocalDateTime.now());
                 }
             } else {
+                System.out.println("[DEBUG] timeStr es nulo/vacío. Usando LocalDateTime.now().");
                 fichada.setFechaHora(LocalDateTime.now());
             }
 
@@ -84,14 +96,18 @@ public class HikvisionSyncController {
                 fichada.setSector(reloj.getSector());
             }
 
+            System.out.println("[DEBUG] >>> Fichada a GUARDAR: legajo=" + fichada.getLegajoReloj()
+                    + " | fechaHora=" + fichada.getFechaHora()
+                    + " | idEmpresa=" + fichada.getIdEmpresa()
+                    + " | modoVerificacion=" + fichada.getModoVerificacion());
+
             // 5. Guardar la Fichada llamando a AsistenciaService
             asistenciaService.guardarFichada(fichada);
-            System.out.println("Fichada guardada correctamente para legajo: " + legajo + " (Reloj: " + numeroSerie + ")");
+            System.out.println("[DEBUG] Fichada guardada correctamente para legajo: " + legajo + " (Reloj: " + numeroSerie + ")");
         } else {
-            System.out.println("Reloj no encontrado en la base de datos con numero de serie: " + numeroSerie);
+            System.out.println("[DEBUG] Reloj NO encontrado en la base de datos con numero de serie: " + numeroSerie);
         }
 
-        // Responderle al reloj un HTTP 200 OK para que sepa que el dato llegó
         return ResponseEntity.ok("OK");
     }
 

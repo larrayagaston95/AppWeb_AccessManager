@@ -1,6 +1,6 @@
-﻿import { fetchEmpleadosTodos, createEmpleado, updateEmpleado, deleteEmpleado, fetchProximoLegajo } from '../api/empleadoService.js';
+import { fetchEmpleadosTodos, createEmpleado, updateEmpleado, deleteEmpleado, fetchProximoLegajo } from '../api/empleadoService.js';
 import { fetchSucursales, fetchSectoresPorSucursal } from '../api/apiService.js';
-import { createLicencia } from '../api/licenciaService.js';
+import { fetchLicenciasPorEmpleado, createLicencia, updateLicencia, deleteLicencia } from '../api/licenciaService.js';
 
 let modalEmpleadoInstancia = null;
 let modalLicenciaInstancia = null;
@@ -150,7 +150,7 @@ async function abrirModalCrear() {
     document.getElementById('empId').value = '';
     document.getElementById('empSeccion').innerHTML = '<option value="">-- Seleccione Sucursal Primero --</option>';
 
-    // â”€â”€ Autocompletar Legajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Autocompletar Legajo ──────────────────────────────────────────────────
     const inputLegajo = document.getElementById('empLegajo');
     try {
         const proximo = await fetchProximoLegajo();
@@ -200,18 +200,94 @@ async function guardarEmpleado() {
     }
 }
 
-window.abrirModalLicencia = (id) => {
+window.abrirModalLicencia = async (id) => {
     const emp = empleadosCargados.find(e => e.id === id);
     if (!emp) return;
 
-    document.getElementById('formLicencia').reset();
+    window.cancelarEdicionLicencia(); // Resetea formulario y esconde botones de edición
+    
     document.getElementById('licEmpleadoId').value = emp.id;
     document.getElementById("licEmpleadoNombre").innerText = `Empleado: ${emp.apellido}, ${emp.nombre} (Legajo: ${emp.legajo})`;
     
+    await cargarHistorialLicencias(emp.id);
     modalLicenciaInstancia.show();
 };
 
+async function cargarHistorialLicencias(empleadoId) {
+    const tbody = document.getElementById('tablaCuerpoLicencias');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Cargando historial...</td></tr>';
+    
+    try {
+        const licencias = await fetchLicenciasPorEmpleado(empleadoId);
+        if (licencias.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay licencias registradas.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        // Invertimos para ver primero las más recientes
+        licencias.slice().reverse().forEach(lic => {
+            // Parse manual fecha para evitar TZ offset
+            const inicio = lic.fechaInicio.split('-').reverse().join('/');
+            const fin = lic.fechaFin.split('-').reverse().join('/');
+            
+            html += `
+            <tr>
+                <td class="fw-bold">${lic.tipoLicencia}</td>
+                <td>${inicio}</td>
+                <td>${fin}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info me-1" onclick='window.prepararEdicionLicencia(${JSON.stringify(lic).replace(/'/g, "&apos;")})'>
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="window.eliminarLicenciaReq(${lic.id}, ${empleadoId})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error al cargar historial.</td></tr>';
+    }
+}
+
+window.prepararEdicionLicencia = (lic) => {
+    document.getElementById('licId').value = lic.id;
+    document.getElementById('licTipo').value = lic.tipoLicencia;
+    document.getElementById('licFechaInicio').value = lic.fechaInicio;
+    document.getElementById('licFechaFin').value = lic.fechaFin;
+    document.getElementById('licObservaciones').value = lic.observaciones || '';
+    
+    document.getElementById('btnGuardarLicencia').innerHTML = '<i class="bi bi-save me-1"></i> Actualizar Licencia';
+    document.getElementById('btnCancelarEdicionLicencia').classList.remove('d-none');
+};
+
+window.cancelarEdicionLicencia = () => {
+    document.getElementById('licId').value = '';
+    document.getElementById('licTipo').value = '';
+    document.getElementById('licFechaInicio').value = '';
+    document.getElementById('licFechaFin').value = '';
+    document.getElementById('licObservaciones').value = '';
+    
+    document.getElementById('btnGuardarLicencia').innerHTML = '<i class="bi bi-save me-1"></i> Guardar Licencia';
+    document.getElementById('btnCancelarEdicionLicencia').classList.add('d-none');
+};
+
+window.eliminarLicenciaReq = async (licId, empleadoId) => {
+    if (!confirm('¿Seguro que desea eliminar esta licencia? Se borrarán sus reportes de asistencia.')) return;
+    try {
+        await deleteLicencia(licId);
+        await cargarHistorialLicencias(empleadoId);
+    } catch (e) {
+        alert('Error al eliminar la licencia: ' + (e.message || e));
+    }
+};
+
 async function guardarLicencia() {
+    const licId = document.getElementById('licId').value;
     const empleadoId = document.getElementById('licEmpleadoId').value;
     const tipo = document.getElementById('licTipo').value;
     const fechaInicio = document.getElementById('licFechaInicio').value;
@@ -237,11 +313,17 @@ async function guardarLicencia() {
     };
 
     try {
-        await createLicencia(payload);
-        alert('Licencia registrada con exito.');
-        modalLicenciaInstancia.hide();
+        if (licId) {
+            await updateLicencia(licId, payload);
+            alert('Licencia actualizada con éxito.');
+        } else {
+            await createLicencia(payload);
+            alert('Licencia registrada con éxito.');
+        }
+        window.cancelarEdicionLicencia();
+        await cargarHistorialLicencias(empleadoId);
     } catch (e) {
-        alert('Error al registrar la licencia: ' + (e.message || e));
+        alert('Error al guardar la licencia: ' + (e.message || e));
     }
 }
 

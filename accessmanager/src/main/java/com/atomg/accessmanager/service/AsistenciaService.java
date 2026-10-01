@@ -105,8 +105,93 @@ public class AsistenciaService {
         }
     }
 
+    /**
+     * Guarda la fichada (Historial crudo) e intenta emparejarla dinámicamente con un
+     * ReporteAsistencia del mismo día EXACTO, calculando entrada, salida y horas trabajadas.
+     */
     public Fichada guardarFichada(Fichada fichada) {
-        return fichadaRepository.save(fichada);
+        // 1. Guardar registro crudo siempre
+        Fichada fichadaGuardada = fichadaRepository.save(fichada);
+
+        try {
+            // 2. Buscar al empleado por legajo y empresa
+            Optional<Empleado> empOpt = Optional.empty();
+            if (fichada.getIdEmpresa() != null && fichada.getLegajoReloj() != null) {
+                empOpt = empleadoRepository.findByLegajoRelojAndEmpresaId(fichada.getLegajoReloj(), fichada.getIdEmpresa());
+            } else if (fichada.getLegajoReloj() != null) {
+                empOpt = empleadoRepository.findByLegajoReloj(fichada.getLegajoReloj());
+            }
+
+            if (empOpt.isPresent()) {
+                Empleado emp = empOpt.get();
+
+                // 3. Extraer el día EXACTO de la fechaHora de la fichada
+                LocalDate fechaDia = fichada.getFechaHora().toLocalDate();
+                System.out.println("[DEBUG guardarFichada] Emparejando para empleado ID=" + emp.getId()
+                        + " | legajo=" + emp.getLegajoReloj()
+                        + " | fechaHora fichada=" + fichada.getFechaHora()
+                        + " | fechaDia (LocalDate)=" + fechaDia);
+
+                // 4. Buscar reporte EXCLUSIVO de ese día (query JPQL explícita con WHERE fecha = :fecha)
+                Optional<ReporteAsistencia> reporteOpt = reporteAsistenciaRepository
+                        .buscarPorEmpleadoYFecha(emp.getId(), fechaDia);
+
+                ReporteAsistencia reporte;
+                if (reporteOpt.isEmpty()) {
+                    // Primera fichada del día → crear reporte nuevo
+                    System.out.println("[DEBUG guardarFichada] No existe reporte para fecha=" + fechaDia + ". Creando nuevo (ENTRADA).");
+                    reporte = new ReporteAsistencia();
+                    reporte.setEmpleado(emp);
+                    reporte.setFecha(fechaDia);
+                    reporte.setEntrada(fichada.getFechaHora());
+                    reporte.setHorasTrabajadas(0.0);
+                    reporte.setHorasExtras(0.0);
+                    reporte.setObservaciones("Falta Fichada de Salida");
+                } else {
+                    // Ya existe el reporte para ese día → actualizar salida y calcular horas
+                    reporte = reporteOpt.get();
+                    System.out.println("[DEBUG guardarFichada] Reporte existente encontrado ID=" + reporte.getId()
+                            + " | fecha=" + reporte.getFecha()
+                            + " | entrada actual=" + reporte.getEntrada()
+                            + " → Registrando SALIDA=" + fichada.getFechaHora());
+
+                    reporte.setSalida(fichada.getFechaHora());
+
+                    if (reporte.getEntrada() != null) {
+                        Duration duracion = Duration.between(reporte.getEntrada(), reporte.getSalida());
+                        double horasTrabajadas = duracion.toMinutes() / 60.0;
+                        reporte.setHorasTrabajadas(Math.round(horasTrabajadas * 100.0) / 100.0);
+
+                        double jornadaBase = emp.getHorasJornadaBase() != null
+                                ? emp.getHorasJornadaBase().doubleValue() : 8.0;
+
+                        if (horasTrabajadas > jornadaBase) {
+                            double extras = horasTrabajadas - Math.round(jornadaBase);
+                            reporte.setHorasExtras(Math.round(extras * 100.0) / 100.0);
+                            reporte.setObservaciones("Jornada Completa + Extras");
+                        } else {
+                            reporte.setHorasExtras(0.0);
+                            reporte.setObservaciones("Jornada Completa");
+                        }
+                        System.out.println("[DEBUG guardarFichada] Horas calculadas: " + reporte.getHorasTrabajadas()
+                                + " hs | Extras: " + reporte.getHorasExtras()
+                                + " hs | Obs: " + reporte.getObservaciones());
+                    }
+                }
+
+                reporteAsistenciaRepository.save(reporte);
+                System.out.println("[DEBUG guardarFichada] ReporteAsistencia guardado OK para fecha=" + fechaDia);
+            } else {
+                System.out.println("[DEBUG guardarFichada] Empleado NO encontrado para legajo="
+                        + fichada.getLegajoReloj() + " | empresaId=" + fichada.getIdEmpresa()
+                        + ". No se genera ReporteAsistencia.");
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR guardarFichada] Fallo emparejando ReporteAsistencia: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return fichadaGuardada;
     }
 
     // =========================================================================
@@ -127,12 +212,29 @@ public class AsistenciaService {
      */
     public List<ReporteAsistencia> obtenerReporteMensual(String legajoDelEmpleado, Long identificadorDeLaEmpresa, int anioRequerido, int mesRequerido) {
         try {
-            LocalDate fechaDeInicio = LocalDate.of(anioRequerido, mesRequerido, 1);
-            LocalDate fechaDeFin = fechaDeInicio.plusMonths(1).minusDays(1);
+            System.out.println("=== [DEBUG AsistenciaService] obtenerReporteMensual ===");
+            System.out.println("[DEBUG] Parámetros recibidos -> legajo: '" + legajoDelEmpleado
+                    + "' | empresaId: " + identificadorDeLaEmpresa
+                    + " | anio: " + anioRequerido
+                    + " | mes: " + mesRequerido);
+
+            System.out.println("[DEBUG] Rango de fechas calculado -> anio: " + anioRequerido + " | mes: " + mesRequerido);
             
-            // Se realiza la busqueda estrictamente combinando legajo y empresa (Multi-Tenant)
+            // Se realiza la busqueda estrictamente combinando legajo y empresa (Multi-Tenant) extrayendo el año y mes
             List<ReporteAsistencia> listaDeReportes = reporteAsistenciaRepository
-                    .buscarReporteIndividual(legajoDelEmpleado, identificadorDeLaEmpresa, fechaDeInicio, fechaDeFin);
+                    .buscarReporteIndividual(legajoDelEmpleado, identificadorDeLaEmpresa, anioRequerido, mesRequerido);
+
+            System.out.println("[DEBUG] Cantidad de ReporteAsistencia recuperados de la BD: " + listaDeReportes.size());
+
+            // Log detallado de cada registro recuperado
+            for (int i = 0; i < listaDeReportes.size(); i++) {
+                ReporteAsistencia r = listaDeReportes.get(i);
+                System.out.println("[DEBUG] Reporte[" + i + "] -> fecha=" + r.getFecha()
+                        + " | entrada=" + r.getEntrada()
+                        + " | salida=" + r.getSalida()
+                        + " | horasTrabajadas=" + r.getHorasTrabajadas()
+                        + " | obs=" + r.getObservaciones());
+            }
 
             // Enriquecer filas "Ausente" cruzando datos con el repositorio de licencias
             listaDeReportes.forEach(reporteIterado -> {
@@ -147,6 +249,7 @@ public class AsistenciaService {
                 }
             });
 
+            System.out.println("[DEBUG] ======================================================");
             return listaDeReportes;
         } catch (Exception excepcionConsulta) {
             System.err.println("Error en AsistenciaService.java -> obtenerReporteMensual: Fallo general al buscar reportes - " + excepcionConsulta.getMessage());
@@ -160,10 +263,8 @@ public class AsistenciaService {
      */
     public List<ReporteAsistencia> obtenerReporteMensualMasivo(
             Long empresaId, Long sucursalId, Long sectorId, int anio, int mes) {
-        LocalDate fechaInicio = LocalDate.of(anio, mes, 1);
-        LocalDate fechaFin    = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
         List<ReporteAsistencia> reportes = reporteAsistenciaRepository
-                .buscarReportesMasivos(empresaId, sucursalId, sectorId, fechaInicio, fechaFin);
+                .buscarReportesMasivos(empresaId, sucursalId, sectorId, anio, mes);
 
         reportes.forEach(r -> {
             if ("Ausente".equalsIgnoreCase(r.getObservaciones())
@@ -181,9 +282,7 @@ public class AsistenciaService {
      * Devuelve el resumen agregado de asistencia para todos los empleados de un sector.
      */
     public List<ResumenSectorDTO> obtenerResumenSector(Long sectorId, int anio, int mes) {
-        LocalDate fechaInicio = LocalDate.of(anio, mes, 1);
-        LocalDate fechaFin    = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
-        return reporteAsistenciaRepository.obtenerResumenPorSector(sectorId, fechaInicio, fechaFin);
+        return reporteAsistenciaRepository.obtenerResumenPorSector(sectorId, anio, mes);
     }
 
     // =========================================================================

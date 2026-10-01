@@ -1,4 +1,4 @@
-﻿// Lógica de inicio de sesión con JWT
+// Lógica de inicio de sesión con JWT
 
 document.addEventListener('DOMContentLoaded', () => {
     // Si ya hay token, lo mandamos directo al dashboard
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || 'Credenciales incorrectas');
             }
 
-            // Ã‰xito: Guardar token JWT y datos de sesión
+            // Éxito: Guardar token JWT y datos de sesión
             localStorage.setItem('access_token_am', data.token);
             localStorage.setItem('username_am', data.username);
             localStorage.setItem('rol_am', data.rol);

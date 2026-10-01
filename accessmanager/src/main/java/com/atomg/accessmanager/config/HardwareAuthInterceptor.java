@@ -18,6 +18,13 @@ public class HardwareAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String path = request.getServletPath();
+        
+        // Exclusión directa para hardware biométrico, ignorando validación de token de empresa
+        if (path.startsWith("/api/hardware/") || path.startsWith("/iclock/")) {
+            return true;
+        }
+
         String token = request.getParameter("token");
         
         if (token == null) {

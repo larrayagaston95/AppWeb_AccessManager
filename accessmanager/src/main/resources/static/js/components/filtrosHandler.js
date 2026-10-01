@@ -1,13 +1,13 @@
 ﻿import { fetchSucursales, fetchSectoresPorSucursal, fetchEmpleadosPorSector } from '../api/apiService.js';
 
-// Mapa local de meses para traducir texto â†’ número
+// Mapa local de meses para traducir texto → número
 const mapaMeses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
     "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
 };
 
 /**
- * Inicializa Select2 y carga la cascada Sucursal â†’ Sección â†’ Empleado.
+ * Inicializa Select2 y carga la cascada Sucursal → Sección → Empleado.
  * Debe ejecutarse UNA SOLA VEZ después de que el DOM del header ya fue renderizado.
  */
 export async function inicializarCombosInteligentes() {
@@ -21,14 +21,14 @@ export async function inicializarCombosInteligentes() {
     // limpiamente si en algún futuro se re-inicia (evitamos listeners duplicados).
     $(document).off('change.cascada');
 
-    // â”€â”€ 1. INICIALIZACIÃ“N SELECT2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 1. INICIALIZACIÓN SELECT2 ────────────────────────────────────────────
     $sucursal.add($sector).add($empleado).select2({
         placeholder: 'Seleccione una opción...',
         allowClear: false,
         width: '100%'
     });
 
-    // â”€â”€ 2. CARGA INICIAL DE SUCURSALES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 2. CARGA INICIAL DE SUCURSALES ───────────────────────────────────────
     try {
         const sucursales = await fetchSucursales(1);
         $sucursal.empty().append('<option value="">-- Seleccione Sucursal --</option>');
@@ -47,7 +47,7 @@ export async function inicializarCombosInteligentes() {
         console.error('âŒ Error al cargar sucursales:', err);
     }
 
-    // â”€â”€ 3. CASCADA: SUCURSAL â†’ SECCIÃ“N â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 3. CASCADA: SUCURSAL → SECCIÓN ──────────────────────────────────────
     $(document).on('change.cascada', '#selectSucursal', async function () {
         const sucursalId = $(this).val();
 
@@ -71,7 +71,7 @@ export async function inicializarCombosInteligentes() {
         console.log(`âœ… Sectores cargados: ${sectores.length}`);
     });
 
-    // â”€â”€ 4. CASCADA: SECCIÃ“N â†’ EMPLEADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 4. CASCADA: SECCIÓN → EMPLEADO ───────────────────────────────────────
     $(document).on('change.cascada', '#selectSeccion', async function () {
         const sectorId = $(this).val();
 

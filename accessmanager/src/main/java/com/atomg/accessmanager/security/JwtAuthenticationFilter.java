@@ -23,12 +23,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     /**
-     * Salta el filtro JWT para requests OPTIONS (preflight CORS).
-     * Sin esto el browser recibe 403 antes de poder enviar el GET/POST real con el token.
+     * Exclusión del filtro JWT para rutas que no requieren autenticación.
+     * Proyecto: FluxTech | Autor: LARRAYA GASTÓN
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+        String path = request.getServletPath();
+        return path.startsWith("/api/hardware/") || path.startsWith("/iclock/") || path.equals("/api/auth/login");
     }
 
     @Override

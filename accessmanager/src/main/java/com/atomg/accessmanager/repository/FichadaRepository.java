@@ -16,6 +16,11 @@ public interface FichadaRepository extends JpaRepository<Fichada, Long> {
     List<Fichada> findByLegajoRelojAndFechaHoraBetweenOrderByFechaHoraAsc(String legajoReloj, LocalDateTime inicio, LocalDateTime fin);
 
     // =========================================================================
+    // HISTORIAL - Ultimas 100 fichadas crudas
+    // =========================================================================
+    List<Fichada> findTop100ByIdEmpresaOrderByFechaHoraDesc(Long idEmpresa);
+
+    // =========================================================================
     // DASHBOARD - Fichadas del dia actual
     // =========================================================================
 

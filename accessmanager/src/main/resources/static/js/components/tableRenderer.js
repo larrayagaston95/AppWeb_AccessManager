@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // tableRenderer.js
 // Renderiza el contenido de la tabla de asistencia en dos modos:
 //   - INDIVIDUAL: detalle día a día de un empleado
@@ -34,7 +34,51 @@ function actualizarCabeceras(modo) {
     thead.innerHTML = modo === 'individual' ? COL_INDIVIDUAL : COL_SECTOR;
 }
 
-// â”€â”€ MODO INDIVIDUAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── HELPERS DE FORMATEO SIN CONVERSIÓN DE TIMEZONE ───────────────────────────
+
+/**
+ * Formatea una cadena de fecha/hora del backend (ISO o 'yyyy-MM-ddTHH:mm:ss')
+ * extrayendo la hora directamente con split(), SIN pasar por new Date().
+ * @param {string} str - Ej: "2026-10-03T08:00:00" o "2026-10-03 08:00:00"
+ * @returns {string} - Ej: "08:00"
+ */
+function extraerHora(str) {
+    if (!str) return '--:--';
+    // 1. Separar por la 'T' o el espacio
+    const partesFechaHora = str.split(/[T ]/);
+    if (partesFechaHora.length < 2) return str; // Si no hay hora, retorna original
+    
+    // 2. Extraer la parte de la hora "HH:mm:ss..."
+    const horaCompleta = partesFechaHora[1];
+    
+    // 3. Separar por ':' y retornar "HH:mm"
+    const partesHora = horaCompleta.split(':');
+    if (partesHora.length >= 2) {
+        return partesHora[0] + ':' + partesHora[1];
+    }
+    return horaCompleta;
+}
+
+/**
+ * Formatea la parte de fecha del string a "dd/mm/aaaa" usando un split puro sin conversión TZ.
+ * @param {string} str - Ej: "2026-10-06" o "2026-10-06T00:00:00"
+ * @returns {string} - Ej: "06/10/2026"
+ */
+function extraerFecha(str) {
+    if (!str) return '';
+    // 1. Tomar solo la parte antes de la 'T' o espacio si lo hubiera
+    const fechaPura = str.split(/[T ]/)[0]; // "2026-10-06"
+    
+    // 2. Separar por guiones
+    const partes = fechaPura.split('-'); // ["2026", "10", "06"]
+    
+    if (partes.length === 3) {
+        return partes[2] + '/' + partes[1] + '/' + partes[0];
+    }
+    return fechaPura;
+}
+
+// ── MODO INDIVIDUAL ──────────────────────────────────────────────────────────
 
 /**
  * Renderiza la tabla de fichajes diarios de un empleado.
@@ -55,15 +99,10 @@ export function renderTableIndividual(data) {
     }
 
     tbody.innerHTML = data.map(item => {
-        // Formateo de fecha y horas al estándar local (es-AR)
-        const fechaFmt   = new Date(item.fecha + 'T00:00:00')
-            .toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const entradaFmt = item.entrada
-            ? new Date(item.entrada).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-            : '--:--';
-        const salidaFmt  = item.salida
-            ? new Date(item.salida).toLocaleTimeString('es-AR',  { hour: '2-digit', minute: '2-digit' })
-            : '--:--';
+        // ⚠️ NO usar new Date() — parseo manual para evitar offsets de TZ en el browser
+        const fechaFmt   = extraerFecha(item.fecha);
+        const entradaFmt = extraerHora(item.entrada);
+        const salidaFmt  = extraerHora(item.salida);
 
         // Badge de color según observación
         const obs = item.observaciones ?? '';
@@ -103,15 +142,10 @@ export function renderizarTablaAsistencia(datos) {
     }
 
     tbody.innerHTML = datos.map(item => {
-        const fechaFmt = item.fecha 
-            ? new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            : '';
-        const entradaFmt = item.hora_entrada 
-            ? new Date(item.hora_entrada).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-            : '--:--';
-        const salidaFmt = item.hora_salida 
-            ? new Date(item.hora_salida).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-            : '--:--';
+        // ⚠️ NO usar new Date() — parseo manual para evitar offsets de TZ en el browser
+        const fechaFmt   = extraerFecha(item.fecha);
+        const entradaFmt = extraerHora(item.hora_entrada);
+        const salidaFmt  = extraerHora(item.hora_salida);
 
         const obs = item.estado ?? '';
         let badgeColor = 'bg-success';
@@ -131,7 +165,7 @@ export function renderizarTablaAsistencia(datos) {
     }).join('');
 }
 
-// â”€â”€ MODO SECTOR (RESUMEN CONSOLIDADO) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MODO SECTOR (RESUMEN CONSOLIDADO) ────────────────────────────────────────
 
 /**
  * Renderiza la tabla de resumen del sector: un renglón por empleado con totales.
@@ -169,7 +203,7 @@ export function renderTableSector(data) {
     }).join('');
 }
 
-// â”€â”€ ALIAS RETROCOMPATIBLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ALIAS RETROCOMPATIBLE ─────────────────────────────────────────────────────
 // Para no romper código existente que importaba renderTable()
 export const renderTable = renderTableIndividual;
 

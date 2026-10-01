@@ -1,6 +1,6 @@
-﻿/**
+/**
  * Renderiza el encabezado institucional con la barra de filtros.
- * Los <select> de Sucursal, SecciÃ³n y Empleado arrancan VACÃOS;
+ * Los <select> de Sucursal, Sección y Empleado arrancan VACÍOS;
  * su contenido real lo inyecta inicializarCombosInteligentes().
  *
  * @param {Function} onSalirCallback - Se ejecuta al presionar "Salir".
@@ -14,13 +14,13 @@ export function renderHeader(onSalirCallback) {
         <nav class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
             <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
 
-                <!-- TÃ­tulo principal de la plataforma -->
+                <!-- Título principal de la plataforma -->
                 <div class="d-flex align-items-center">
                     <span class="navbar-brand mb-0 h1 fs-4 fw-bold text-turquoise me-4">
                         <i class="bi bi-shield-lock-fill me-2"></i>AccessManager
                     </span>
                     
-                    <!-- MenÃº de NavegaciÃ³n SPA -->
+                    <!-- Menú de Navegación SPA -->
                     <ul class="nav nav-pills d-none d-md-flex" id="mainNavigation">
                         <li class="nav-item">
                             <a class="nav-link active px-3 py-1 fw-bold" id="navDashboard" href="#" style="border-radius: 20px;">
@@ -40,6 +40,11 @@ export function renderHeader(onSalirCallback) {
                         <li class="nav-item ms-2">
                             <a class="nav-link text-light px-3 py-1 fw-bold" id="navRelojes" href="#" style="border-radius: 20px;">
                                 <i class="bi bi-router me-1"></i> Relojes
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="nav-link text-light px-3 py-1 fw-bold" id="navHistorial" href="#" style="border-radius: 20px;">
+                                <i class="bi bi-clock-history me-1"></i> Historial
                             </a>
                         </li>
                     </ul>
@@ -72,16 +77,16 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- Filtro: SecciÃ³n (se puebla segÃºn la sucursal elegida) -->
+                    <!-- Filtro: Sección (se puebla según la sucursal elegida) -->
                     <div class="col-6 col-sm-4 col-md-2">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
-                               style="font-size: 11px;">SecciÃ³n</label>
+                               style="font-size: 11px;">Sección</label>
                         <select id="selectSeccion" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Seleccione SecciÃ³n --</option>
+                            <option value="">-- Seleccione Sección --</option>
                         </select>
                     </div>
 
-                    <!-- Filtro: Empleado (se puebla segÃºn la secciÃ³n elegida) -->
+                    <!-- Filtro: Empleado (se puebla según la sección elegida) -->
                     <div class="col-12 col-sm-4 col-md-3">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
                                style="font-size: 11px;">Empleado</label>
@@ -90,10 +95,10 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- Filtro: AÃ±o -->
+                    <!-- Filtro: Año -->
                     <div class="col-4 col-md-2">
                         <label class="form-label text-light small fw-bold text-uppercase mb-1"
-                               style="font-size: 11px;">AÃ±o</label>
+                               style="font-size: 11px;">Año</label>
                         <select id="selectAnio" class="form-select bg-dark text-light border-secondary">
                             <option value="2026" selected>2026</option>
                             <option value="2025">2025</option>
@@ -121,10 +126,10 @@ export function renderHeader(onSalirCallback) {
                         </select>
                     </div>
 
-                    <!-- BotÃ³n Buscar -->
+                    <!-- Botón Buscar -->
                     <div class="col-4 col-md-1 d-grid">
                         <label class="form-label d-none d-md-block invisible mb-1"
-                               style="font-size: 11px;">AcciÃ³n</label>
+                               style="font-size: 11px;">Acción</label>
                         <button id="btnFiltrar" class="btn btn-turquoise fw-bold">
                             <i class="bi bi-search"></i>
                         </button>
@@ -135,7 +140,7 @@ export function renderHeader(onSalirCallback) {
         </div>
     `;
 
-    // Conectamos el botÃ³n Salir
+    // Conectamos el botón Salir
     const btnSalir = document.getElementById('btnSalir');
     if (btnSalir) {
         btnSalir.addEventListener('click', onSalirCallback);

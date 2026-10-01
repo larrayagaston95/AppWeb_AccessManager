@@ -1,6 +1,6 @@
-﻿const BASE_URL = '/api/v1/asistencia';
+const BASE_URL = '/api/v1/asistencia';
 
-// â”€â”€ 1. Helper para los headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 1. Helper para los headers ────────────────────────────────────────────────
 function authHeaders() {
     const token = localStorage.getItem('access_token_am');
     if (!token) return {};
@@ -9,7 +9,7 @@ function authHeaders() {
     };
 }
 
-// â”€â”€ 2. Manejo de respuesta genérico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 2. Manejo de respuesta genérico ───────────────────────────────────────────
 async function handleResponse(response) {
     if (response.status === 401 || response.status === 403) {
         localStorage.removeItem('access_token_am');
@@ -114,7 +114,20 @@ export async function fetchResumenSector(sectorId, anio, mes) {
 }
 
 export async function fetchCurrentUserInfo() {
-    const response = await fetch('/api/auth/me', { method: 'GET', headers: authHeaders() });
+    const token = localStorage.getItem('access_token_am');
+    if (!token) {
+        // Intercepción: si no hay token, no intentar la petición
+        window.location.href = 'login.html';
+        throw new Error('Token ausente');
+    }
+    
+    const response = await fetch('/api/auth/me', { 
+        method: 'GET', 
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    });
+    
     return handleResponse(response);
 }
 

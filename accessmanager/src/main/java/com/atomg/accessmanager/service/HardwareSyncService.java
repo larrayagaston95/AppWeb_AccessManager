@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -62,7 +63,7 @@ public class HardwareSyncService {
             return;
         }
         Reloj reloj = relojOpt.get();
-        reloj.setUltimaConexion(LocalDateTime.now());
+        reloj.setUltimaConexion(LocalDateTime.now(ZoneId.of("America/Argentina/Cordoba")));
         relojRepository.save(reloj);
 
         Long empresaId = reloj.getEmpresa().getId();
@@ -311,7 +312,7 @@ public class HardwareSyncService {
         LocalDateTime ultimaConex = reloj.getUltimaConexion();
 
         // Actualizamos la conexion para futuros chequeos
-        reloj.setUltimaConexion(LocalDateTime.now());
+        reloj.setUltimaConexion(LocalDateTime.now(ZoneId.of("America/Argentina/Cordoba")));
         relojRepository.save(reloj);
 
         List<ComandoReloj> pendientes = comandoRelojRepository

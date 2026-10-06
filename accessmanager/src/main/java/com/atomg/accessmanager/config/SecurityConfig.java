@@ -70,6 +70,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Hardware webhooks (Hikvision / ZKTeco ADMS) sin JWT
                 .requestMatchers("/api/hardware/**", "/iclock/**").permitAll()
+                // Fichadas corporativas: la validación se hace en el controlador (token de empresa / JWT)
+                .requestMatchers("/api/fichadas/**").permitAll()
                 // Endpoint de prueba de calculo
                 .requestMatchers("/api/calculo/**").permitAll()
                 // Reportes (abierto temporalmente para el frontend)

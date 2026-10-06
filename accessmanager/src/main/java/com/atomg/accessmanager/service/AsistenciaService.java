@@ -10,9 +10,12 @@ import com.atomg.accessmanager.repository.FichadaRepository;
 import com.atomg.accessmanager.repository.LicenciaRepository;
 import com.atomg.accessmanager.repository.ReporteAsistenciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +27,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class AsistenciaService {
+
+    private static final Logger log = LoggerFactory.getLogger(AsistenciaService.class);
+
+    /** Tiempo de gracia (minutos) entre fichadas consecutivas del mismo empleado. */
+    private static final long COOLDOWN_MINUTOS = 5;
 
     @Autowired
     private EmpleadoRepository empleadoRepository;
@@ -110,7 +118,24 @@ public class AsistenciaService {
      * ReporteAsistencia del mismo día EXACTO, calculando entrada, salida y horas trabajadas.
      */
     public Fichada guardarFichada(Fichada fichada) {
-        // 1. Guardar registro crudo siempre
+        // 0. Filtro anti-spam / cooldown: descartar fichadas a menos de 5 min de la última
+        if (fichada.getLegajoReloj() != null && fichada.getFechaHora() != null) {
+            Optional<Fichada> ultimaOpt = fichada.getIdEmpresa() != null
+                    ? fichadaRepository.findFirstByIdEmpresaAndLegajoRelojOrderByFechaHoraDesc(
+                            fichada.getIdEmpresa(), fichada.getLegajoReloj())
+                    : fichadaRepository.findFirstByLegajoRelojOrderByFechaHoraDesc(fichada.getLegajoReloj());
+            if (ultimaOpt.isPresent() && ultimaOpt.get().getFechaHora() != null) {
+                long minutos = Math.abs(ChronoUnit.MINUTES.between(
+                        ultimaOpt.get().getFechaHora(), fichada.getFechaHora()));
+                if (minutos < COOLDOWN_MINUTOS) {
+                    log.info("Fichada descartada por cooldown de 5 minutos (legajo={}, empresaId={}, diferencia={} min)",
+                            fichada.getLegajoReloj(), fichada.getIdEmpresa(), minutos);
+                    return null;
+                }
+            }
+        }
+
+        // 1. Guardar registro crudo
         Fichada fichadaGuardada = fichadaRepository.save(fichada);
 
         try {

@@ -12,16 +12,16 @@ export function renderHeader(onSalirCallback) {
     headerContainer.innerHTML = `
         <!-- NAVBAR SUPERIOR INSTITUCIONAL -->
         <nav class="navbar navbar-dark bg-dark border-bottom border-secondary py-3">
-            <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+            <div class="container-fluid px-3 px-md-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
 
                 <!-- Título principal de la plataforma -->
-                <div class="d-flex align-items-center">
+                <div class="d-flex flex-wrap align-items-center nav-main-wrapper">
                     <span class="navbar-brand mb-0 h1 fs-4 fw-bold text-turquoise me-4">
                         <i class="bi bi-shield-lock-fill me-2"></i>AccessManager
                     </span>
                     
                     <!-- Menú de Navegación SPA -->
-                    <ul class="nav nav-pills d-none d-md-flex" id="mainNavigation">
+                    <ul class="nav nav-pills flex-nowrap nav-scroll-mobile" id="mainNavigation">
                         <li class="nav-item">
                             <a class="nav-link active px-3 py-1 fw-bold" id="navDashboard" href="#" style="border-radius: 20px;">
                                 <i class="bi bi-speedometer2 me-1"></i> Dashboard

@@ -1,4 +1,4 @@
-﻿/* Configuración Base y Paleta Oscura */
+/* Configuración Base y Paleta Oscura */
 body {
     background-color: #0f172a;
     color: #f8fafc;
@@ -227,4 +227,38 @@ footer {
 /* Fondo de tarjeta oscura usada en el acceso rápido */
 .bg-dark-card {
     background-color: #1e293b;
+}
+
+/* =============================================================================
+   NAVEGACIÓN RESPONSIVA (móviles)
+   El menú principal se muestra como una fila desplazable horizontalmente
+   para que Dashboard, Asistencia, Personal, Relojes e Historial sean
+   accesibles con el dedo.
+   ============================================================================= */
+.nav-scroll-mobile {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.nav-scroll-mobile::-webkit-scrollbar { display: none; }
+.nav-scroll-mobile .nav-link {
+    white-space: nowrap;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 767.98px) {
+    .nav-main-wrapper { width: 100%; }
+    .nav-main-wrapper .navbar-brand { margin-right: 0 !important; width: 100%; }
+    .nav-scroll-mobile {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        margin-top: 6px;
+    }
+    .nav-scroll-mobile .nav-item { margin-left: 0 !important; margin-right: 8px; flex: 0 0 auto; }
+    #navbarNombreEmpresa { max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    main.container-fluid { padding-left: 1rem !important; padding-right: 1rem !important; }
+    .card-dashboard { padding: 1rem 1.1rem; }
+    .card-dashboard__value { font-size: 1.9rem; }
 }

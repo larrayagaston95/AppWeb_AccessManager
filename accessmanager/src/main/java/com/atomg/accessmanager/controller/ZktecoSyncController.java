@@ -39,7 +39,8 @@ public class ZktecoSyncController {
     public ResponseEntity<String> syncZKTeco(
             @RequestParam(value = "SN", required = false) String snParam,
             @RequestHeader(value = "SN", required = false) String snHeader,
-            @RequestBody(required = false) String body) {
+            @RequestBody(required = false) String body,
+            jakarta.servlet.http.HttpServletRequest request) {
 
         // Normalizador del número de serie:
         // ZKTeco puede enviarlo como query param (?SN=...), header o incluirlo en la primera línea del body.
@@ -52,7 +53,7 @@ public class ZktecoSyncController {
 
         try {
             // Delegar al mismo motor de negocio que usa HikvisionSyncController
-            hardwareSyncService.procesarFichajesZKTeco(serialNumber, body);
+            hardwareSyncService.procesarFichajesZKTeco(serialNumber, body, empresaEsperada(request));
         } catch (Exception e) {
             // Tolerancia a fallos: el firmware NUNCA debe recibir un error HTTP
             System.out.println("[ZKTECO][ERROR] Fallo interno procesando fichajes de SN=" + serialNumber + ": " + e.getMessage());
@@ -68,7 +69,8 @@ public class ZktecoSyncController {
      * Acepta los campos estándar: SN, PIN / badgenumber / employeeNo, time / timestamp.
      */
     @PostMapping(value = "/sync/json", consumes = {"application/json"})
-    public ResponseEntity<String> syncZKTecoJson(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<String> syncZKTecoJson(@RequestBody Map<String, String> payload,
+                                                 jakarta.servlet.http.HttpServletRequest request) {
         try {
             // Resolución del número de serie del dispositivo
             String serialNumber = coalesce(payload.get("SN"), payload.get("deviceSerialNumber"), payload.get("sn"));
@@ -89,7 +91,7 @@ public class ZktecoSyncController {
             String modo = coalesce(payload.get("verifyMode"), payload.get("tipo"), "");
             String lineaAdms = pin + "\t" + fechaHora + "\t0\t" + modo;
 
-            hardwareSyncService.procesarFichajesZKTeco(serialNumber, lineaAdms);
+            hardwareSyncService.procesarFichajesZKTeco(serialNumber, lineaAdms, empresaEsperada(request));
         } catch (Exception e) {
             System.out.println("[ZKTECO-JSON][ERROR] " + e.getMessage());
         }
@@ -131,6 +133,10 @@ public class ZktecoSyncController {
     /**
      * Retorna el primer valor no nulo y no vacío de la lista.
      */
+    private Long empresaEsperada(jakarta.servlet.http.HttpServletRequest request) {
+        return (Long) request.getAttribute(com.atomg.accessmanager.config.HardwareAuthInterceptor.HARDWARE_EMPRESA_ID);
+    }
+
     private String coalesce(String... valores) {
         for (String v : valores) {
             if (v != null && !v.isBlank()) return v.trim();

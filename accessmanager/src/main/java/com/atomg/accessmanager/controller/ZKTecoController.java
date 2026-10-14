@@ -26,12 +26,15 @@ public class ZKTecoController {
     public ResponseEntity<String> recibirFichajes(
             @RequestParam(value = "SN", required = false) String serialNumber,
             @RequestParam(value = "table", required = false) String table,
-            @RequestBody(required = false) String datosCrudos) {
+            @RequestBody(required = false) String datosCrudos,
+            jakarta.servlet.http.HttpServletRequest request) {
             
         // El reloj puede mandar peticiones de "handshake" vacias o con otra info.
         // Si hay datos, los procesamos.
         if (datosCrudos != null && !datosCrudos.isEmpty()) {
-            hardwareSyncService.procesarFichajesZKTeco(serialNumber, datosCrudos);
+            Long empresaEsperada = (Long) request.getAttribute(
+                    com.atomg.accessmanager.config.HardwareAuthInterceptor.HARDWARE_EMPRESA_ID);
+            hardwareSyncService.procesarFichajesZKTeco(serialNumber, datosCrudos, empresaEsperada);
         }
         
         // ZKTeco requiere estrctamente un "OK" en texto plano con status 200

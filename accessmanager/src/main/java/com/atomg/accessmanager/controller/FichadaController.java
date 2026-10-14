@@ -51,6 +51,9 @@ public class FichadaController {
     @Autowired
     private com.atomg.accessmanager.repository.EmpresaRepository empresaRepository;
 
+    @Autowired
+    private com.atomg.accessmanager.security.TenantGuard tenantGuard;
+
     /**
      * Registro de fichada corporativa. Público a nivel Spring Security, pero exige que el
      * token (header X-Api-Token, Bearer o parámetro/campo "token") coincida con empresas.api_token.
@@ -119,7 +122,9 @@ public class FichadaController {
             if (body.get("relojId") != null) {
                 try {
                     Long relojId = Long.valueOf(body.get("relojId").toString());
-                    relojRepository.findById(relojId).ifPresent(f::setReloj);
+                    relojRepository.findById(relojId)
+                            .filter(r -> r.getEmpresa() != null && f.getIdEmpresa().equals(r.getEmpresa().getId()))
+                            .ifPresent(f::setReloj);
                 } catch (NumberFormatException e) {
                     f.setReloj(null);
                 }
@@ -188,9 +193,17 @@ public class FichadaController {
             @RequestParam("marca") String marca,
             HttpServletRequest request) {
 
-        // La ruta es pública: el upload requiere sesión JWT válida
-        if (request.getAttribute("empresaId") == null) {
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado.");
+        }
+
+        // La sucursal y el sector tienen que ser de la empresa del usuario, y el sector de esa sucursal
+        var sectorOpt = tenantGuard.sectorDeEmpresa(sectorId, empresaId);
+        if (tenantGuard.sucursalDeEmpresa(sucursalId, empresaId).isEmpty()
+                || sectorOpt.isEmpty()
+                || !sucursalId.equals(sectorOpt.get().getSucursal().getIdsucursal())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sucursal o sector no encontrados.");
         }
         
         if (file.isEmpty()) {
@@ -201,8 +214,9 @@ public class FichadaController {
             int procesadas = hardwareSyncService.procesarArchivoFichadasOffline(file, sucursalId, sectorId, marca);
             return ResponseEntity.ok("Se procesaron " + procesadas + " fichadas exitosamente.");
         } catch (Exception e) {
+            log.error("Error procesando archivo de fichadas", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error procesando el archivo: " + e.getMessage());
+                    .body("Error procesando el archivo. Verifique el formato e intente nuevamente.");
         }
     }
 }

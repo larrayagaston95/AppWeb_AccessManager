@@ -26,8 +26,12 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.atomg.accessmanager.security.LoginAttemptService loginAttemptService;
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials,
+                                   jakarta.servlet.http.HttpServletRequest request) {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
@@ -35,17 +39,22 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Faltan credenciales"));
         }
 
+        String ip = request.getRemoteAddr();
+        if (loginAttemptService.bloqueado(username, ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("error", "Demasiados intentos fallidos. Intente nuevamente en unos minutos."));
+        }
+
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
 
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Usuario no encontrado"));
+        // Mismo mensaje para usuario inexistente y contraseña incorrecta: no revela qué usuarios existen
+        if (usuarioOpt.isEmpty() || !passwordEncoder.matches(password, usuarioOpt.get().getPassword())) {
+            loginAttemptService.registrarFallo(username, ip);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Usuario o contraseña incorrectos"));
         }
 
         Usuario usuario = usuarioOpt.get();
-
-        if (!passwordEncoder.matches(password, usuario.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Contraseña incorrecta"));
-        }
+        loginAttemptService.registrarExito(username, ip);
 
         // Generar JWT con EmpresaID en los claims
         String token = jwtUtil.generateToken(usuario.getUsername(), usuario.getEmpresa().getId(), usuario.getRol());
@@ -73,7 +82,7 @@ public class AuthController {
                     "empresaNombre", usuario.getEmpresa().getNombre()
             ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
         }
     }
 }

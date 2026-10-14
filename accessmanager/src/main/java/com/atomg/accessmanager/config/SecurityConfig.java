@@ -2,6 +2,7 @@ package com.atomg.accessmanager.config;
 
 import com.atomg.accessmanager.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +27,10 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /** Orígenes permitidos (CORS_ALLOWED_ORIGINS), separados por coma. "*" = cualquiera. */
+    @Value("${app.cors.allowed-origins:*}")
+    private String allowedOrigins;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -44,7 +49,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        List<String> origenes = java.util.Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(o -> !o.isEmpty())
+                .toList();
+        config.setAllowedOriginPatterns(origenes.isEmpty() ? List.of("*") : origenes);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
@@ -71,11 +80,9 @@ public class SecurityConfig {
                 // Hardware webhooks (Hikvision / ZKTeco ADMS) sin JWT
                 .requestMatchers("/api/hardware/**", "/iclock/**").permitAll()
                 // Fichadas corporativas: la validación se hace en el controlador (token de empresa / JWT)
-                .requestMatchers("/api/fichadas/**").permitAll()
-                // Endpoint de prueba de calculo
-                .requestMatchers("/api/calculo/**").permitAll()
-                // Reportes (abierto temporalmente para el frontend)
-                .requestMatchers("/api/reportes/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/fichadas").permitAll()
+                // Endpoint de prueba de calculo: solo SuperAdmin
+                .requestMatchers("/api/calculo/**").hasAuthority("ROLE_SUPERADMIN")
                 // Preflight OPTIONS: siempre permitir sin token
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Panel SuperAdmin: solo ROLE_SUPERADMIN

@@ -40,6 +40,9 @@ public class RelojController {
     @Autowired
     private SectorRepository sectorRepository;
 
+    @Autowired
+    private com.atomg.accessmanager.security.TenantGuard tenantGuard;
+
     @GetMapping
     public ResponseEntity<?> listarRelojes(HttpServletRequest request) {
         Long empresaId = (Long) request.getAttribute("empresaId");
@@ -58,6 +61,10 @@ public class RelojController {
         com.atomg.accessmanager.model.Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
 
+        if (payload.containsKey("ip") && !ipPermitida(payload.get("ip"))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "IP de reloj no permitida."));
+        }
+
         Reloj reloj = new Reloj();
         // 4. Seteamos la empresa al objeto Reloj ANTES de guardarlo
         reloj.setEmpresa(empresa);
@@ -68,13 +75,13 @@ public class RelojController {
 
         if (payload.containsKey("ip")) reloj.setIp(payload.get("ip"));
         if (payload.containsKey("usuario")) reloj.setUsuario(payload.get("usuario"));
-        if (payload.containsKey("password")) reloj.setPassword(payload.get("password"));
+        if (payload.get("password") != null && !payload.get("password").isBlank()) reloj.setPassword(payload.get("password"));
 
         if (payload.containsKey("sucursalId") && payload.get("sucursalId") != null && !payload.get("sucursalId").trim().isEmpty()) {
-            reloj.setSucursal(sucursalRepository.findById(Long.parseLong(payload.get("sucursalId"))).orElse(null));
+            reloj.setSucursal(tenantGuard.sucursalDeEmpresa(Long.parseLong(payload.get("sucursalId")), empresaId).orElse(null));
         }
         if (payload.containsKey("sectorId") && payload.get("sectorId") != null && !payload.get("sectorId").trim().isEmpty()) {
-            reloj.setSector(sectorRepository.findById(Long.parseLong(payload.get("sectorId"))).orElse(null));
+            reloj.setSector(tenantGuard.sectorDeEmpresa(Long.parseLong(payload.get("sectorId")), empresaId).orElse(null));
         }
 
         relojRepository.save(reloj);
@@ -110,6 +117,10 @@ public class RelojController {
             return ResponseEntity.status(404).body(Map.of("error", "Reloj no encontrado o no pertenece a su empresa."));
         }
 
+        if (payload.containsKey("ip") && !ipPermitida(payload.get("ip"))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "IP de reloj no permitida."));
+        }
+
         Reloj reloj = relojOpt.get();
         if (payload.containsKey("nombre")) reloj.setNombre(payload.get("nombre"));
         if (payload.containsKey("marca")) reloj.setMarca(payload.get("marca"));
@@ -118,15 +129,16 @@ public class RelojController {
 
         if (payload.containsKey("ip")) reloj.setIp(payload.get("ip"));
         if (payload.containsKey("usuario")) reloj.setUsuario(payload.get("usuario"));
-        if (payload.containsKey("password")) reloj.setPassword(payload.get("password"));
+        // Vacío = mantener la contraseña actual (el front ya no la recibe)
+        if (payload.get("password") != null && !payload.get("password").isBlank()) reloj.setPassword(payload.get("password"));
 
         if (payload.containsKey("sucursalId")) {
             String sucId = payload.get("sucursalId");
-            reloj.setSucursal((sucId != null && !sucId.trim().isEmpty()) ? sucursalRepository.findById(Long.parseLong(sucId)).orElse(null) : null);
+            reloj.setSucursal((sucId != null && !sucId.trim().isEmpty()) ? tenantGuard.sucursalDeEmpresa(Long.parseLong(sucId), empresaId).orElse(null) : null);
         }
         if (payload.containsKey("sectorId")) {
             String secId = payload.get("sectorId");
-            reloj.setSector((secId != null && !secId.trim().isEmpty()) ? sectorRepository.findById(Long.parseLong(secId)).orElse(null) : null);
+            reloj.setSector((secId != null && !secId.trim().isEmpty()) ? tenantGuard.sectorDeEmpresa(Long.parseLong(secId), empresaId).orElse(null) : null);
         }
 
         relojRepository.save(reloj);
@@ -161,5 +173,11 @@ public class RelojController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /** Vacía o una IP/host que no apunte al propio servidor ni a metadata cloud (SSRF). */
+    private boolean ipPermitida(String ip) {
+        if (ip == null || ip.isBlank()) return true;
+        return com.atomg.accessmanager.service.RelojService.destinoPermitido(ip.trim());
     }
 }

@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     Optional<Empresa> findByApiToken(String apiToken);
+
+    Optional<Empresa> findByNombre(String nombre);
 }

@@ -23,7 +23,7 @@ public class HikvisionSyncController {
     private AsistenciaService asistenciaService;
 
     @PostMapping("/sync")
-    public ResponseEntity<String> syncAttendance(@RequestBody String payload) {
+    public ResponseEntity<String> syncAttendance(@RequestBody String payload, jakarta.servlet.http.HttpServletRequest request) {
         // 1. Inspeccionar el payload (como String genérico para detectar JSON/XML)
         System.out.println("=== [DEBUG] Payload recibido de Hikvision ===");
         System.out.println(payload);
@@ -46,6 +46,10 @@ public class HikvisionSyncController {
         
         if (relojOpt.isPresent()) {
             Reloj reloj = relojOpt.get();
+            if (!com.atomg.accessmanager.config.HardwareAuthInterceptor.relojAutorizado(request, reloj)) {
+                System.out.println("[SEGURIDAD] Reloj " + numeroSerie + " no pertenece a la empresa del token. Ignorado.");
+                return ResponseEntity.ok("OK");
+            }
             System.out.println("[DEBUG] Reloj encontrado en BD: ID=" + reloj.getId() + " | NumeroSerie=" + reloj.getNumeroSerie());
             
             // Actualizar la fecha y hora de la última conexión del equipo físico
@@ -84,11 +88,12 @@ public class HikvisionSyncController {
             fichada.setModoVerificacion("HIKVISION_API");
             
             // Asignar datos de la sucursal/sector del reloj a la fichada
-            if (reloj.getEmpresa() != null) {
-                fichada.setIdEmpresa(reloj.getEmpresa().getId());
-            } else {
-                fichada.setIdEmpresa(1L); // Fallback en caso de que no tenga empresa asignada
+            if (reloj.getEmpresa() == null) {
+                // Nunca asignar fichadas a una empresa por defecto: se descartan
+                System.out.println("[DEBUG] Reloj sin empresa asignada. Fichada descartada.");
+                return ResponseEntity.ok("OK");
             }
+            fichada.setIdEmpresa(reloj.getEmpresa().getId());
             if (reloj.getSucursal() != null) {
                 fichada.setSucursal(reloj.getSucursal());
             }

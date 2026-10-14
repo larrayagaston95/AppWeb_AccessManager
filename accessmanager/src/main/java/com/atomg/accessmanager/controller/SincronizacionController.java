@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/sincronizacion")
@@ -23,10 +22,9 @@ public class SincronizacionController {
     private FichajeCrudoRepository fichajeRepository;
 
     // Simulación de tokens por empresa
-    private final Map<String, Long> tokensEmpresas = Map.of(
-            "TOKEN-RELOJ-KDL-2026", 1L,
-            "TOKEN-RELOJ-CLIENTE2", 2L
-    );
+    // El token del gateway es el api_token de la empresa (tabla empresas), no un valor fijo en el código
+    @Autowired
+    private com.atomg.accessmanager.repository.EmpresaRepository empresaRepository;
 
     @PostMapping("/subir-fichajes")
     public ResponseEntity<?> recibirFichajes(
@@ -34,12 +32,14 @@ public class SincronizacionController {
             @RequestBody List<FichajeDTO> listaFichajes
     ) {
         // Validar el Token del emisor
-        if (!tokensEmpresas.containsKey(gatewayToken)) {
+        java.util.Optional<com.atomg.accessmanager.model.Empresa> empresaOpt =
+                gatewayToken == null ? java.util.Optional.empty() : empresaRepository.findByApiToken(gatewayToken.trim());
+        if (empresaOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Error: El token del dispositivo no es válido.");
         }
 
-        Long empresaId = tokensEmpresas.get(gatewayToken);
+        Long empresaId = empresaOpt.get().getId();
         List<FichajeCrudo> fichajesAGuardar = new ArrayList<>();
 
         // Mapear DTOs a Entidades de Base de Datos

@@ -51,6 +51,14 @@ public class HardwareSyncService {
     private AsistenciaService asistenciaService;
 
     public void procesarFichajesZKTeco(String serialNumber, String datosCrudos) {
+        procesarFichajesZKTeco(serialNumber, datosCrudos, null);
+    }
+
+    /**
+     * @param empresaEsperada empresa validada por token de hardware (null = sin token); si no
+     *                        coincide con la dueña del reloj, el lote se descarta.
+     */
+    public void procesarFichajesZKTeco(String serialNumber, String datosCrudos, Long empresaEsperada) {
         if (datosCrudos == null || datosCrudos.isBlank() || serialNumber == null) {
             return;
         }
@@ -63,6 +71,10 @@ public class HardwareSyncService {
             return;
         }
         Reloj reloj = relojOpt.get();
+        if (empresaEsperada != null && !empresaEsperada.equals(reloj.getEmpresa().getId())) {
+            System.out.println("   [SEGURIDAD] SN " + serialNumber + " no pertenece a la empresa del token. Lote descartado.");
+            return;
+        }
         reloj.setUltimaConexion(LocalDateTime.now(ZoneId.of("America/Argentina/Cordoba")));
         relojRepository.save(reloj);
 
@@ -117,6 +129,13 @@ public class HardwareSyncService {
     }
 
     public void procesarFichajeHikvision(JsonNode payload) {
+        procesarFichajeHikvision(payload, null);
+    }
+
+    /**
+     * @param empresaEsperada empresa validada por token de hardware (null = sin token).
+     */
+    public void procesarFichajeHikvision(JsonNode payload, Long empresaEsperada) {
         System.out.println("=== NUEVO FICHAJE HIKVISION ===");
         try {
             JsonNode eventNode = payload.has("AccessControllerEvent") ? payload.get("AccessControllerEvent") : payload;
@@ -165,6 +184,10 @@ public class HardwareSyncService {
             }
             Reloj reloj = relojOpt.get();
             Long empresaId = reloj.getEmpresa().getId();
+            if (empresaEsperada != null && !empresaEsperada.equals(empresaId)) {
+                System.out.println("   [SEGURIDAD] SN " + deviceSerial + " no pertenece a la empresa del token. Ignorado.");
+                return;
+            }
 
             DateTimeFormatter isoFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
             LocalDateTime fechaHora;

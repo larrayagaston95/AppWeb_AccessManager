@@ -4,8 +4,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,30 +19,41 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // En producción esto debería estar en application.properties o variables de entorno
-    // Generamos una clave segura para HS256 (mínimo 256 bits)
-    private final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
-    // 24 horas de validez
-    private final long JWT_EXPIRATION = 1000 * 60 * 60 * 24;
+    private final Key secretKey;
+    private final long jwtExpirationMs;
+
+    public JwtUtil(@Value("${jwt.secret:}") String secret,
+                   @Value("${jwt.expiration-minutes:480}") long expirationMinutes) {
+        if (secret == null || secret.isBlank()) {
+            log.warn("JWT_SECRET no configurado: se usa una clave aleatoria. "
+                    + "Las sesiones se invalidan en cada reinicio. Configurar JWT_SECRET en producción.");
+            this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        } else {
+            byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
+            if (bytes.length < 32) {
+                throw new IllegalStateException("JWT_SECRET debe tener al menos 32 caracteres.");
+            }
+            this.secretKey = Keys.hmacShaKeyFor(bytes);
+        }
+        this.jwtExpirationMs = expirationMinutes * 60_000L;
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     public Long extractEmpresaId(String token) {
-        final Claims claims = extractAllClaims(token);
-        // extraemos el claim como Integer o Long (al serializar json suele quedar como Integer)
-        Object empresaIdObj = claims.get("empresa_id");
-        if (empresaIdObj instanceof Integer) {
-            return ((Integer) empresaIdObj).longValue();
+        Object empresaIdObj = extractAllClaims(token).get("empresa_id");
+        if (empresaIdObj instanceof Number n) {
+            return n.longValue();
         }
-        return (Long) empresaIdObj;
+        return null;
     }
-    
+
     public String extractRol(String token) {
-        final Claims claims = extractAllClaims(token);
-        return (String) claims.get("rol");
+        return (String) extractAllClaims(token).get("rol");
     }
 
     public Date extractExpiration(String token) {
@@ -46,13 +61,12 @@ public class JwtUtil {
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        return claimsResolver.apply(extractAllClaims(token));
     }
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -70,12 +84,13 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
-                .signWith(SECRET_KEY)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + jwtExpirationMs))
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 

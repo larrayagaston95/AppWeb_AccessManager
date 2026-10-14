@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml.js';
 import { fetchEmpleadosTodos, createEmpleado, updateEmpleado, deleteEmpleado, fetchProximoLegajo } from '../api/empleadoService.js';
 import { fetchSucursales, fetchSectoresPorSucursal } from '../api/apiService.js';
 import { fetchLicenciasPorEmpleado, createLicencia, updateLicencia, deleteLicencia } from '../api/licenciaService.js';
@@ -47,7 +48,7 @@ async function cargarSelectSucursales() {
     try {
         const data = await fetchSucursales();
         let html = '<option value="">-- Seleccione --</option>';
-        data.forEach(s => html += `<option value="${s.id}">${s.nombre}</option>`);
+        data.forEach(s => html += `<option value="${escapeHtml(s.id)}">${escapeHtml(s.nombre)}</option>`);
         selectSucursal.innerHTML = html;
     } catch (e) {
         console.error(e);
@@ -65,7 +66,7 @@ async function cargarSelectSecciones(sucursalId, selectValue = null) {
     try {
         const data = await fetchSectoresPorSucursal(sucursalId);
         let html = '<option value="">-- Seleccione --</option>';
-        data.forEach(s => html += `<option value="${s.id}">${s.nombre}</option>`);
+        data.forEach(s => html += `<option value="${escapeHtml(s.id)}">${escapeHtml(s.nombre)}</option>`);
         selectSeccion.innerHTML = html;
         if (selectValue) selectSeccion.value = selectValue;
     } catch (e) {
@@ -89,20 +90,20 @@ export async function recargarTablaEmpleados() {
         empleadosCargados.forEach(emp => {
             html += `
             <tr>
-                <td class="fw-bold text-turquoise">${emp.legajo}</td>
-                <td>${emp.nombre}</td>
-                <td>${emp.apellido}</td>
-                <td><span class="badge bg-secondary shadow-sm">${emp.sectorNombre || ''}</span></td>
-                <td class="text-center">${emp.horasJornadaBase} hs</td>
-                <td>${emp.telefono || '-'}</td>
+                <td class="fw-bold text-turquoise">${escapeHtml(emp.legajo)}</td>
+                <td>${escapeHtml(emp.nombre)}</td>
+                <td>${escapeHtml(emp.apellido)}</td>
+                <td><span class="badge bg-secondary shadow-sm">${escapeHtml(emp.sectorNombre || '')}</span></td>
+                <td class="text-center">${escapeHtml(emp.horasJornadaBase)} hs</td>
+                <td>${escapeHtml(emp.telefono || '-')}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-outline-warning me-2 shadow-sm" title="Licencias" onclick="window.abrirModalLicencia(${emp.id})">
+                    <button class="btn btn-sm btn-outline-warning me-2 shadow-sm" title="Licencias" onclick="window.abrirModalLicencia(${Number(emp.id)})">
                         <i class="bi bi-briefcase"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-info me-2 shadow-sm" onclick="window.editarEmpleado(${emp.id})">
+                    <button class="btn btn-sm btn-outline-info me-2 shadow-sm" onclick="window.editarEmpleado(${Number(emp.id)})">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="window.eliminarEmpleado(${emp.id})">
+                    <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="window.eliminarEmpleado(${Number(emp.id)})">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -234,14 +235,14 @@ async function cargarHistorialLicencias(empleadoId) {
             
             html += `
             <tr>
-                <td class="fw-bold">${lic.tipoLicencia}</td>
-                <td>${inicio}</td>
-                <td>${fin}</td>
+                <td class="fw-bold">${escapeHtml(lic.tipoLicencia)}</td>
+                <td>${escapeHtml(inicio)}</td>
+                <td>${escapeHtml(fin)}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-info me-1" onclick='window.prepararEdicionLicencia(${JSON.stringify(lic).replace(/'/g, "&apos;")})'>
+                    <button class="btn btn-sm btn-outline-info me-1" onclick="window.prepararEdicionLicencia(${escapeHtml(JSON.stringify(lic))})">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="window.eliminarLicenciaReq(${lic.id}, ${empleadoId})">
+                    <button class="btn btn-sm btn-outline-danger" onclick="window.eliminarLicenciaReq(${Number(lic.id)}, ${Number(empleadoId)})">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>

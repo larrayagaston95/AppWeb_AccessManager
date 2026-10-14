@@ -22,6 +22,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.atomg.accessmanager.repository.UsuarioRepository usuarioRepository;
+
     /**
      * Exclusión del filtro JWT para rutas que no requieren autenticación.
      * Proyecto: FluxTech | Autor: LARRAYA GASTÓN
@@ -58,10 +61,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (jwtUtil.validateToken(jwt, username)) {
+            java.util.Optional<com.atomg.accessmanager.model.Usuario> usuarioOpt = java.util.Optional.empty();
+            try {
+                if (jwtUtil.validateToken(jwt, username)) {
+                    usuarioOpt = usuarioRepository.findByUsername(username);
+                }
+            } catch (Exception e) {
+                // Token inválido: se continúa sin autenticar
+            }
 
-                Long   empresaId = jwtUtil.extractEmpresaId(jwt);
-                String rol       = jwtUtil.extractRol(jwt);
+            // El rol y la empresa se toman de la base, no del token: si el usuario fue
+            // borrado, cambiado de empresa o degradado, el token viejo deja de dar esos permisos.
+            if (usuarioOpt.isPresent() && usuarioOpt.get().getEmpresa() != null) {
+
+                com.atomg.accessmanager.model.Usuario usuario = usuarioOpt.get();
+                Long   empresaId = usuario.getEmpresa().getId();
+                String rol       = usuario.getRol();
 
                 // Guardar en atributos del request para acceso facil en controladores Multi-Tenant
                 request.setAttribute("empresaId", empresaId);

@@ -50,6 +50,8 @@ public class Reloj {
     @Column(name = "usuario")
     private String usuario;
 
+    // Credencial ISAPI del dispositivo: se puede recibir pero nunca se devuelve en las respuestas JSON
     @Column(name = "password")
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String password;
 }

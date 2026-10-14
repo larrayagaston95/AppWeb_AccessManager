@@ -35,7 +35,12 @@ public class RelojService {
             throw new RuntimeException("Esta función requiere configurar la IP y credenciales del reloj para acceso en red local");
         }
 
-        String url = "http://" + reloj.getIp() + "/ISAPI/AccessControl/AcsEvent/Clear";
+        // Se revalida en el momento de usar la IP: puede haberse guardado antes de este control
+        if (!destinoPermitido(reloj.getIp().trim())) {
+            throw new RuntimeException("La IP configurada para el reloj no está permitida.");
+        }
+
+        String url = "http://" + reloj.getIp().trim() + "/ISAPI/AccessControl/AcsEvent/Clear";
         String payloadXml = "<AcsEventClear><ClearAll>true</ClearAll></AcsEventClear>";
 
         try {
@@ -58,6 +63,30 @@ public class RelojService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Falla de conexión ISAPI con el dispositivo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Protección SSRF: el servidor solo hace pedidos a relojes en la red del cliente (LAN/VPN).
+     * Acepta "host" o "host:puerto" (sin rutas ni parámetros) y rechaza destinos que apunten
+     * al propio servidor (loopback), a link-local (incluye 169.254.169.254, metadata cloud),
+     * a la dirección comodín o a multicast.
+     */
+    public static boolean destinoPermitido(String destino) {
+        if (destino == null || destino.isBlank() || !destino.matches("[A-Za-z0-9.\\-]+(:\\d{1,5})?")) {
+            return false;
+        }
+        String host = destino.contains(":") ? destino.substring(0, destino.indexOf(':')) : destino;
+        try {
+            for (java.net.InetAddress addr : java.net.InetAddress.getAllByName(host)) {
+                if (addr.isLoopbackAddress() || addr.isLinkLocalAddress()
+                        || addr.isAnyLocalAddress() || addr.isMulticastAddress()) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (java.net.UnknownHostException e) {
+            return false;
         }
     }
 }

@@ -1,3 +1,4 @@
+import { escapeHtml } from './utils/escapeHtml.js';
 import { fetchReporteMensual, fetchResumenSector, fetchDetalleAsistencia } from './api/apiService.js';
 import { initDashboard } from './components/dashboardUI.js';
 import { renderHeader }        from './components/headerNav.js';
@@ -524,7 +525,8 @@ window.editarReloj = async (id) => {
     document.getElementById('relojNumeroSerie').value = reloj.numeroSerie || '';
     document.getElementById('relojIp').value = reloj.ip || '';
     document.getElementById('relojUsuario').value = reloj.usuario || '';
-    document.getElementById('relojPassword').value = reloj.password || '';
+    // El backend ya no devuelve la contraseña del reloj: vacío = mantener la actual
+    document.getElementById('relojPassword').value = '';
     document.getElementById('modalRelojLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Reloj';
 
     const selectSuc = document.getElementById('relojSucursal');
@@ -666,19 +668,19 @@ window.cargarRelojesUI = async function() {
         relojes.forEach(r => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="text-light">${r.id}</td>
-                <td class="fw-bold text-light">${r.numeroSerie || ''}</td>
-                <td class="text-light">${r.nombre || r.descripcion || ''} <span class="badge bg-secondary ms-2">${r.marca || ''}</span></td>
-                <td class="text-light">${r.ultimaConexion ? `<span class="text-white fw-bold">${r.ultimaConexion.replace('T', ' ').substring(0, 16)}</span>` : '<span class="badge bg-danger text-white">Sin conexión</span>'}</td>
+                <td class="text-light">${escapeHtml(r.id)}</td>
+                <td class="fw-bold text-light">${escapeHtml(r.numeroSerie || '')}</td>
+                <td class="text-light">${escapeHtml(r.nombre || r.descripcion || '')} <span class="badge bg-secondary ms-2">${escapeHtml(r.marca || '')}</span></td>
+                <td class="text-light">${r.ultimaConexion ? `<span class="text-white fw-bold">${escapeHtml(r.ultimaConexion.replace('T', ' ').substring(0, 16))}</span>` : '<span class="badge bg-danger text-white">Sin conexión</span>'}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-outline-info me-1 shadow-sm" onclick="window.editarReloj(${r.id})" title="Editar">
+                    <button class="btn btn-sm btn-outline-info me-1 shadow-sm" onclick="window.editarReloj(${Number(r.id)})" title="Editar">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger me-1 shadow-sm" onclick="window.eliminarReloj(${r.id})" title="Eliminar">
+                    <button class="btn btn-sm btn-outline-danger me-1 shadow-sm" onclick="window.eliminarReloj(${Number(r.id)})" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
                     ${r.marca === 'Hikvision' ? `
-                    <button class="btn btn-sm btn-danger shadow-sm" onclick="window.formatearReloj(${r.id})" title="Formatear Memoria">
+                    <button class="btn btn-sm btn-danger shadow-sm" onclick="window.formatearReloj(${Number(r.id)})" title="Formatear Memoria">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                     </button>` : ''}
                 </td>
@@ -737,11 +739,11 @@ window.cargarHistorialUI = async function() {
             // ⚠️ NO usar new Date() — renderizamos el string crudo del backend para evitar offset de TZ
             const fecha = f.fechaHora ? f.fechaHora.replace('T', ' ').substring(0, 16) : '';
             tr.innerHTML = `
-                <td class="text-light">${fecha}</td>
-                <td class="fw-bold text-light">${f.legajo || ''}</td>
-                <td class="text-light">${f.empleadoNombre || ''}</td>
-                <td class="text-light">${f.reloj || ''}</td>
-                <td class="text-light"><span class="badge bg-secondary">${f.modo || ''}</span></td>
+                <td class="text-light">${escapeHtml(fecha)}</td>
+                <td class="fw-bold text-light">${escapeHtml(f.legajo || '')}</td>
+                <td class="text-light">${escapeHtml(f.empleadoNombre || '')}</td>
+                <td class="text-light">${escapeHtml(f.reloj || '')}</td>
+                <td class="text-light"><span class="badge bg-secondary">${escapeHtml(f.modo || '')}</span></td>
             `;
             tbody.appendChild(tr);
         });

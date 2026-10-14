@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml.js';
 // ============================================================================
 // tableRenderer.js
 // Renderiza el contenido de la tabla de asistencia en dos modos:
@@ -113,12 +114,12 @@ export function renderTableIndividual(data) {
 
         return `
             <tr>
-                <td><strong>${fechaFmt}</strong></td>
-                <td><i class="bi bi-box-arrow-in-right text-success me-2"></i>${entradaFmt}</td>
-                <td><i class="bi bi-box-arrow-left text-danger me-2"></i>${salidaFmt}</td>
+                <td><strong>${escapeHtml(fechaFmt)}</strong></td>
+                <td><i class="bi bi-box-arrow-in-right text-success me-2"></i>${escapeHtml(entradaFmt)}</td>
+                <td><i class="bi bi-box-arrow-left text-danger me-2"></i>${escapeHtml(salidaFmt)}</td>
                 <td class="text-center fw-bold">${(item.horasTrabajadas ?? 0).toFixed(2)} hs</td>
                 <td class="text-center fw-bold text-turquoise">${(item.horasExtras ?? 0).toFixed(2)} hs</td>
-                <td><span class="badge ${badgeColor}">${obs}</span></td>
+                <td><span class="badge ${badgeColor}">${escapeHtml(obs)}</span></td>
             </tr>`;
     }).join('');
 }
@@ -155,12 +156,12 @@ export function renderizarTablaAsistencia(datos) {
 
         return `
             <tr>
-                <td><strong>${fechaFmt}</strong></td>
-                <td><i class="bi bi-box-arrow-in-right text-success me-2"></i>${entradaFmt}</td>
-                <td><i class="bi bi-box-arrow-left text-danger me-2"></i>${salidaFmt}</td>
+                <td><strong>${escapeHtml(fechaFmt)}</strong></td>
+                <td><i class="bi bi-box-arrow-in-right text-success me-2"></i>${escapeHtml(entradaFmt)}</td>
+                <td><i class="bi bi-box-arrow-left text-danger me-2"></i>${escapeHtml(salidaFmt)}</td>
                 <td class="text-center fw-bold">${(item.horas_trabajadas ?? 0).toFixed(2)} hs</td>
                 <td class="text-center fw-bold text-turquoise">${(item.horas_extras ?? 0).toFixed(2)} hs</td>
-                <td><span class="badge ${badgeColor}">${obs}</span></td>
+                <td><span class="badge ${badgeColor}">${escapeHtml(obs)}</span></td>
             </tr>`;
     }).join('');
 }
@@ -192,10 +193,10 @@ export function renderTableSector(data) {
 
         return `
             <tr>
-                <td><span class="badge bg-secondary fw-bold">${emp.legajo}</span></td>
-                <td class="fw-bold">${emp.apellido}, ${emp.nombre}</td>
+                <td><span class="badge bg-secondary fw-bold">${escapeHtml(emp.legajo)}</span></td>
+                <td class="fw-bold">${escapeHtml(emp.apellido)}, ${escapeHtml(emp.nombre)}</td>
                 <td class="text-center">
-                    <span class="${diasClass} fw-bold">${emp.diasTrabajados}</span>
+                    <span class="${diasClass} fw-bold">${escapeHtml(emp.diasTrabajados)}</span>
                 </td>
                 <td class="text-center fw-bold">${emp.totalHoras.toFixed(2)} hs</td>
                 <td class="text-center fw-bold text-turquoise">${emp.totalExtras.toFixed(2)} hs</td>

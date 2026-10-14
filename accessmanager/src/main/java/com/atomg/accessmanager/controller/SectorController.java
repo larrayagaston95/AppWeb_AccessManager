@@ -22,13 +22,23 @@ public class SectorController {
     @Autowired
     private AsistenciaService asistenciaService;
 
+    @Autowired
+    private com.atomg.accessmanager.security.TenantGuard tenantGuard;
+
     // ── 1. Lista de sectores por sucursal (cascada de filtros) ────────────────
     /**
      * GET /api/sectores?sucursalId={id}
      * Devuelve los sectores que pertenecen a la sucursal indicada por ID numérico.
      */
     @GetMapping
-    public ResponseEntity<?> listarPorSucursal(@RequestParam(name = "sucursalId") Long sucursalId) {
+    public ResponseEntity<?> listarPorSucursal(@RequestParam(name = "sucursalId") Long sucursalId,
+                                               jakarta.servlet.http.HttpServletRequest request) {
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) return ResponseEntity.status(401).build();
+        if (tenantGuard.sucursalDeEmpresa(sucursalId, empresaId).isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Sucursal no encontrada"));
+        }
+
         List<Sector> sectores = sectorRepository.findBySucursalIdsucursal(sucursalId);
 
         List<Map<String, Object>> resultado = sectores.stream()
@@ -51,7 +61,14 @@ public class SectorController {
     public ResponseEntity<?> obtenerResumenSector(
             @RequestParam(name = "sectorId") Long sectorId,
             @RequestParam(name = "anio")     int  anio,
-            @RequestParam(name = "mes")      int  mes) {
+            @RequestParam(name = "mes")      int  mes,
+            jakarta.servlet.http.HttpServletRequest request) {
+
+        Long empresaId = (Long) request.getAttribute("empresaId");
+        if (empresaId == null) return ResponseEntity.status(401).build();
+        if (tenantGuard.sectorDeEmpresa(sectorId, empresaId).isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Sector no encontrado"));
+        }
 
         List<ResumenSectorDTO> resumen = asistenciaService.obtenerResumenSector(sectorId, anio, mes);
 

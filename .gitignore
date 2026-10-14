@@ -1,0 +1,9 @@
+# Dumps de base de datos: nunca versionar (contienen datos de clientes y hashes)
+*.sql
+*.sql.gz
+# Clases compiladas sueltas
+*.class
+# Secretos locales
+.env
+.env.*
+application-local.properties

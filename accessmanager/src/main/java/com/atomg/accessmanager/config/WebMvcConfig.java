@@ -14,7 +14,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(hardwareAuthInterceptor)
-                .addPathPatterns("/iclock/**", "/api/hardware/**")
-                .excludePathPatterns("/api/hardware/hikvision/**"); // Hikvision usa el numero de serie en el JSON, no un token URL
+                .addPathPatterns("/iclock/**", "/api/hardware/**");
     }
 }

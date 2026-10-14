@@ -16,6 +16,7 @@ public class Empresa {
     private String nombre;
 
     @Column(name = "api_token")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String apiToken;
 
     @Column(name = "modelo_asistencia")

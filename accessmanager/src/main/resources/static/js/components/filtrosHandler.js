@@ -1,4 +1,5 @@
-﻿import { fetchSucursales, fetchSectoresPorSucursal, fetchEmpleadosPorSector } from '../api/apiService.js';
+﻿import { escapeHtml } from '../utils/escapeHtml.js';
+import { fetchSucursales, fetchSectoresPorSucursal, fetchEmpleadosPorSector } from '../api/apiService.js';
 
 // Mapa local de meses para traducir texto → número
 const mapaMeses = {
@@ -63,7 +64,7 @@ export async function inicializarCombosInteligentes() {
 
         if (sectores && sectores.length > 0) {
             sectores.forEach(sec => {
-                opciones += `<option value="${sec.id}">${sec.nombre}</option>`;
+                opciones += `<option value="${escapeHtml(sec.id)}">${escapeHtml(sec.nombre)}</option>`;
             });
         }
 
@@ -87,7 +88,7 @@ export async function inicializarCombosInteligentes() {
             empleados.forEach(emp => {
                 // El backend devuelve { id, legajo, nombre, apellido }
                 const legajo = emp.legajo ?? emp.legajoReloj ?? emp.legajo_reloj ?? '';
-                opciones += `<option value="${legajo}">${emp.nombre} ${emp.apellido} (${legajo})</option>`;
+                opciones += `<option value="${escapeHtml(legajo)}">${escapeHtml(emp.nombre)} ${escapeHtml(emp.apellido)} (${escapeHtml(legajo)})</option>`;
             });
         }
 

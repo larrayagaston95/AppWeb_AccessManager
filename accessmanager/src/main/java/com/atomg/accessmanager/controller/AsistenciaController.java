@@ -19,8 +19,6 @@ public class AsistenciaController {
     @Autowired
     private AsistenciaService asistenciaService;
 
-    // Seteamos la clave maestra del sistema (Hardcodeada temporalmente para el MVP rápido)
-    private static final String SECURITY_TOKEN = "AtomgAccess2026";
 
     @Autowired
     private com.atomg.accessmanager.service.EmpleadoService empleadoService;

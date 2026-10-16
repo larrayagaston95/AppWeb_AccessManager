@@ -20,6 +20,11 @@ public interface FichadaRepository extends JpaRepository<Fichada, Long> {
 
     java.util.Optional<Fichada> findFirstByLegajoRelojOrderByFechaHoraDesc(String legajoReloj);
 
+    // Agentes locales: evitar duplicados al reenviar y saber desde dónde leer cada reloj
+    boolean existsByIdEmpresaAndLegajoRelojAndFechaHora(Long idEmpresa, String legajoReloj, LocalDateTime fechaHora);
+
+    java.util.Optional<Fichada> findFirstByRelojIdOrderByFechaHoraDesc(Long relojId);
+
     // =========================================================================
     // HISTORIAL - Ultimas 100 fichadas crudas
     // =========================================================================

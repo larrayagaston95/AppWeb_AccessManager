@@ -53,13 +53,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
     });
 
+    let empresasCache = [];
+    let sucursalesCache = [];
+
     // ─── Cargar empresas en el select de Alta Sucursal ───────────────────────
     async function cargarEmpresas() {
         try {
             const resp = await fetch(`${BASE}/empresas`, { headers });
             if (!resp.ok) throw new Error('No se pudo cargar la lista de empresas');
             const empresas = await resp.json();
+            empresasCache = empresas;
             populateSelect('empresaSelect', empresas, e => `${e.nombre}  (ID: ${e.id})`);
+            populateSelect('agenteEmpresaSelect', empresas, e => `${e.nombre}  (ID: ${e.id})`);
         } catch (err) {
             const sel = document.getElementById('empresaSelect');
             if (sel) sel.innerHTML = '<option value="">Error al cargar empresas</option>';
@@ -73,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const resp = await fetch(`${BASE}/sucursales`, { headers });
             if (!resp.ok) throw new Error('No se pudo cargar la lista de sucursales');
             const sucursales = await resp.json();
+            sucursalesCache = sucursales;
             populateSelect(
                 'sucursalSelect',
                 sucursales,
@@ -184,5 +190,146 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerHTML = '<i class="bi bi-node-plus-fill me-1"></i> Generar Sector';
         }
     });
+
+    // ─── Agentes locales ─────────────────────────────────────────────────────
+    const selAgEmpresa  = document.getElementById('agenteEmpresaSelect');
+    const selAgSucursal = document.getElementById('agenteSucursalSelect');
+
+    /** Sucursales de la empresa elegida (el endpoint devuelve el nombre de la empresa, que es único). */
+    selAgEmpresa.addEventListener('change', () => {
+        const empresa = empresasCache.find(e => String(e.id) === selAgEmpresa.value);
+        selAgSucursal.innerHTML = '';
+        const todas = document.createElement('option');
+        todas.value = '';
+        todas.textContent = 'Todas las de la empresa';
+        selAgSucursal.appendChild(todas);
+        if (!empresa) return;
+        sucursalesCache.filter(s => s.empresa === empresa.nombre).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.nombre;
+            selAgSucursal.appendChild(opt);
+        });
+    });
+
+    function mostrarClave(clave) {
+        document.getElementById('claveAgenteValor').value = clave;
+        document.getElementById('claveAgenteBox').classList.remove('d-none');
+    }
+
+    document.getElementById('btnCopiarClave').addEventListener('click', async () => {
+        const input = document.getElementById('claveAgenteValor');
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch {
+            input.select();
+            document.execCommand('copy');
+        }
+        showToast('toastAgente', 'Clave copiada al portapapeles.');
+    });
+
+    function celda(texto, clase) {
+        const td = document.createElement('td');
+        if (clase) td.className = clase;
+        td.textContent = texto ?? '';
+        return td;
+    }
+
+    function boton(texto, clase, onClick) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `btn btn-sm ${clase} ms-1`;
+        b.textContent = texto;
+        b.addEventListener('click', onClick);
+        return b;
+    }
+
+    async function cargarAgentes() {
+        const tbody = document.getElementById('tablaAgentes');
+        try {
+            const resp = await fetch(`${BASE}/agentes`, { headers });
+            if (!resp.ok) throw new Error('No se pudo cargar la lista de agentes');
+            const agentes = await resp.json();
+            tbody.innerHTML = '';
+            if (agentes.length === 0) {
+                const tr = document.createElement('tr');
+                tr.appendChild(celda('Todavía no hay agentes.', 'text-muted text-center'));
+                tr.firstChild.colSpan = 6;
+                tbody.appendChild(tr);
+                return;
+            }
+            agentes.forEach(a => {
+                const tr = document.createElement('tr');
+
+                const tdEstado = document.createElement('td');
+                const badge = document.createElement('span');
+                if (!a.activo)        { badge.className = 'badge bg-secondary'; badge.textContent = 'Revocado'; }
+                else if (a.enLinea)   { badge.className = 'badge bg-success';   badge.textContent = 'En línea'; }
+                else if (!a.ultimaConexion) { badge.className = 'badge bg-warning text-dark'; badge.textContent = 'Nunca conectó'; }
+                else                  { badge.className = 'badge bg-danger';    badge.textContent = 'Sin conexión'; }
+                tdEstado.appendChild(badge);
+                tr.appendChild(tdEstado);
+
+                tr.appendChild(celda(a.nombre + (a.version ? ` (v${a.version})` : ''), 'fw-bold'));
+                tr.appendChild(celda(`${a.empresa} / ${a.sucursal}`));
+                tr.appendChild(celda(a.ultimaConexion ? a.ultimaConexion.replace('T', ' ').substring(0, 19) : '-'));
+                tr.appendChild(celda(a.estado || '-', 'small text-muted'));
+
+                const tdAcc = document.createElement('td');
+                tdAcc.className = 'text-end text-nowrap';
+                tdAcc.appendChild(boton('Nueva clave', 'btn-outline-warning', async () => {
+                    if (!confirm(`¿Generar una clave nueva para "${a.nombre}"? La actual deja de funcionar.`)) return;
+                    const r = await fetch(`${BASE}/agentes/${a.id}/regenerar-clave`, { method: 'POST', headers });
+                    const data = await r.json();
+                    if (!r.ok) { showToast('toastAgente', data.error || 'Error', true); return; }
+                    mostrarClave(data.clave);
+                    await cargarAgentes();
+                }));
+                if (a.activo) {
+                    tdAcc.appendChild(boton('Revocar', 'btn-outline-danger', async () => {
+                        if (!confirm(`¿Revocar "${a.nombre}"? Deja de poder subir fichadas.`)) return;
+                        const r = await fetch(`${BASE}/agentes/${a.id}/revocar`, { method: 'POST', headers });
+                        const data = await r.json();
+                        showToast('toastAgente', data.message || data.error, !r.ok);
+                        await cargarAgentes();
+                    }));
+                }
+                tr.appendChild(tdAcc);
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            tbody.innerHTML = '';
+            const tr = document.createElement('tr');
+            tr.appendChild(celda(err.message, 'text-danger text-center'));
+            tr.firstChild.colSpan = 6;
+            tbody.appendChild(tr);
+        }
+    }
+
+    document.getElementById('formCrearAgente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnCrearAgente');
+        btn.disabled = true;
+        const payload = {
+            empresa_id: selAgEmpresa.value,
+            sucursal_id: selAgSucursal.value || null,
+            nombre: document.getElementById('agenteNombre').value.trim()
+        };
+        try {
+            const resp = await fetch(`${BASE}/agentes`, { method: 'POST', headers, body: JSON.stringify(payload) });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Error al crear el agente');
+            mostrarClave(data.clave);
+            document.getElementById('agenteNombre').value = '';
+            await cargarAgentes();
+        } catch (err) {
+            showToast('toastAgente', err.message, true);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    await cargarAgentes();
+    setInterval(cargarAgentes, 30000);
 
 });

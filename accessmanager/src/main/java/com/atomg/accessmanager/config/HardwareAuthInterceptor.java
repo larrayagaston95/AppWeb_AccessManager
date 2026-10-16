@@ -42,8 +42,17 @@ public class HardwareAuthInterceptor implements HandlerInterceptor {
     @Value("${hardware.require-token:false}")
     private boolean requireToken;
 
+    /** false = solo se aceptan fichadas por agentes locales; los relojes no pueden enviar directo. */
+    @Value("${hardware.directo.habilitado:true}")
+    private boolean directoHabilitado;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!directoHabilitado) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return false;
+        }
+
         String token = request.getParameter("token");
 
         if (token == null || token.isBlank()) {

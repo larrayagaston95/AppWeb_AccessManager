@@ -8,6 +8,6 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-java -Dsun.stdout.encoding=UTF-8 -Dstdout.encoding=UTF-8 -jar "%~dp0agente-fluxtech.jar" --probar
+java -Dsun.stdout.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar "%~dp0agente-fluxtech.jar" --probar
 echo.
 pause

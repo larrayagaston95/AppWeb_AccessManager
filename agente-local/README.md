@@ -1,93 +1,102 @@
 # Agente local FluxTech
 
-Programa que se instala en una PC del cliente (la que ya tenga el dueño). Lee los relojes de la red del local y sube las fichadas a la nube de FluxTech por HTTPS, con una clave propia del agente.
+Programa que se instala en la PC del cliente (la que ya tenga el dueño). Lee los relojes de la red del local y sube las fichadas a la nube de FluxTech por HTTPS, con una clave propia del agente.
 
 ```
- LOCAL DEL CLIENTE                                 NUBE
- Reloj Hikvision ──(red local)──► Agente ──HTTPS + clave──► /api/agente/*
+ LOCAL DEL CLIENTE                                       NUBE
+ Reloj Hikvision ──(red local: ISAPI o SDK)──► Agente ──HTTPS + clave──► /api/agente/*
 ```
 
-- **No hace falta que la PC esté siempre prendida.** Los relojes guardan las fichadas en su memoria (el DS-K1A802MF, hasta 150.000 registros de asistencia). Cuando la PC se prende, el agente lee todo lo que falta y lo sube.
-- **No se pierden fichadas:** lo leído se guarda en disco (`datos/pendientes.json`) y solo se borra cuando la nube confirma que lo recibió. Si no hay internet, sube todo cuando vuelve.
-- **No se duplican:** la nube ignora fichadas repetidas (mismo legajo y mismo segundo), así que reenviar es seguro.
-- **Un solo `.jar`, sin dependencias.** Necesita Java 11 o superior (recomendado: Java 17 de https://adoptium.net).
+- **La PC no necesita estar siempre prendida.** Los relojes guardan las fichadas en su memoria (el DS-K1A802MF, hasta 150.000). Al prenderse, el agente lee lo que falta y lo sube.
+- **No se pierden fichadas.** Lo leído se guarda en disco y solo se borra cuando la nube confirma que lo recibió.
+- **No se duplican.** La nube descarta fichadas repetidas (mismo legajo y segundo).
+- **Dos formas de leer los Hikvision**, elegidas solas en modo `automatico`:
+  1. **ISAPI**: por la red, sin instalar nada. Es lo que usan los modelos recientes.
+  2. **SDK oficial de Hikvision**: el mismo método que usa iVMS-4200. Sirve para modelos y firmwares viejos que no tienen ISAPI de eventos. Requiere copiar el SDK (ver más abajo).
+- Requiere Java 11 o superior (recomendado Java 17 de https://adoptium.net, de 64 bits).
 
 ## Instalación (una vez por local)
 
 ### 1. En el panel de FluxTech
-1. **Cargar el reloj** (pantalla Relojes):
-   - Marca: `Hikvision`.
-   - Número de serie: el de la etiqueta del equipo.
-   - **IP del reloj en la red del local** (ej. `192.168.1.50`), con su usuario y contraseña de administrador.
-   - Sucursal: la del local.
-2. **Crear el agente** (SuperAdmin → *Agentes locales*): elegir empresa y sucursal. **Copiar la clave**: se muestra una sola vez.
+1. **Cargar el reloj** (pantalla Relojes): marca `Hikvision`, número de serie (etiqueta del equipo), **IP en la red del local** (ej. `192.168.1.50`), usuario y contraseña de administrador del reloj, y la sucursal del local.
+2. **Crear el agente** (SuperAdmin → *Agentes locales*): empresa y sucursal. **Copiar la clave**: se muestra una sola vez.
 
-> El reloj necesita una **IP fija**, porque si cambia el agente no lo encuentra. Se configura en el reloj (Red → IP manual) o reservando la IP en el router.
+> El reloj necesita **IP fija** (configurada en el reloj o reservada en el router).
 
 ### 2. En la PC del cliente
-1. Instalar Java 17 si no lo tiene (https://adoptium.net, opción "JRE").
+1. Instalar Java 17 (JRE de 64 bits) si no lo tiene.
 2. Descomprimir el paquete en `C:\FluxTechAgente`.
-3. Copiar `agente.properties.ejemplo` como `agente.properties` y completar:
-   ```
-   servidor.url=https://tu-servidor
-   agente.clave=fxa_...la clave copiada...
-   ```
-4. Doble clic en **`probar.bat`**. Tiene que terminar en `Resultado: TODO OK`.
-5. Clic derecho en **`instalar.bat`** → *Ejecutar como administrador*.
+3. **Probar el reloj:** doble clic en `probar-reloj.bat`, con su IP, usuario y contraseña. El resultado indica si se lee por ISAPI o hace falta el SDK.
+4. Si hace falta el SDK: ver **"SDK de Hikvision"** más abajo.
+5. Copiar `agente.properties.ejemplo` como `agente.properties` y completar `servidor.url` y `agente.clave`.
+6. Doble clic en `probar.bat`. Tiene que terminar en `Resultado: TODO OK`.
+7. Clic derecho en `instalar.bat` → *Ejecutar como administrador*.
 
-Listo. En 1 o 2 minutos el agente aparece **"En línea"** en el panel.
+En 1 o 2 minutos el agente aparece **"En línea"** en el panel. `instalar.bat` crea una tarea de Windows que lo arranca al prender la PC (sin ventanas y sin iniciar sesión) y lo reabre si se detiene. También abre el puerto del receptor (8095) solo para la red local.
 
-Qué deja configurado `instalar.bat`:
-- Una tarea de Windows que arranca el agente al prender la PC, sin abrir ventanas ni requerir iniciar sesión. Cada 10 minutos verifica que siga corriendo y, si se detuvo, lo vuelve a abrir.
-- Una regla de firewall que abre el puerto del receptor (8095) **solo para la red local**.
+## SDK de Hikvision (solo si ISAPI no funciona)
 
-## Probar un reloj antes de crear el agente
+1. Descargar **Device Network SDK (HCNetSDK) para Windows de 64 bits** del sitio de Hikvision. Es gratuito.
+2. Copiar el contenido de su carpeta `lib` (`HCNetSDK.dll`, `HCCore.dll`, la carpeta `HCNetSDKCom` y las `libcrypto`/`libssl`) en `C:\FluxTechAgente\sdk-hikvision\`.
+3. Volver a correr `probar-reloj.bat`. Tiene que aparecer `Método SDK ... [OK]`.
 
-```
-java -jar agente-fluxtech.jar --probar-reloj 192.168.1.50 admin CLAVE_DEL_RELOJ
-```
+No se incluye en el paquete porque lo distribuye Hikvision con sus propias condiciones. Java y el SDK tienen que ser **ambos de 64 bits**. El SDK se conecta al puerto **8000** del reloj (configurable con `hikvision.sdk.puerto`).
 
-Muestra el modelo y el número de serie, y las últimas fichadas leídas de la memoria con su código. Sirve para confirmar que ese modelo permite leer la memoria por la red (ISAPI).
+> **Estado:** el adaptador del SDK se armó siguiendo la estructura oficial de HCNetSDK y se probó contra una biblioteca que la imita (tamaños de estructuras verificados contra C). Todavía no se probó con un reloj real. La primera prueba con el DS-K1A802MF puede requerir un ajuste menor; `probar-reloj.bat` muestra lo que lee para compararlo con la pantalla del reloj.
 
 ## Modo receptor (opcional, tiempo real)
 
-Además de leer la memoria cada minuto, el reloj puede **enviar** cada fichada al agente apenas ocurre. En la configuración del Hikvision (por web o iVMS-4200), en la sección de servidor de eventos / *HTTP Listening* (el nombre varía según el firmware), cargar:
-
-- IP de destino: la IP de la PC del agente.
-- Puerto: `8095`.
-
-Solo se aceptan eventos que lleguen desde la IP de un reloj cargado en el panel. Si el reloj no tiene esa opción, no pasa nada: la lectura de la memoria alcanza.
-
-## Archivos
-
-| Archivo | Para qué |
-|---|---|
-| `agente.properties` | Servidor y clave (no compartir: la clave identifica al local) |
-| `datos/agente.log` | Registro de lo que hace el agente (rota a los 5 MB) |
-| `datos/pendientes.json` | Fichadas leídas que todavía no confirmó la nube |
-| `datos/estado.json` | Hasta dónde se leyó cada reloj |
-| `datos/config-cache.json` | Última lista de relojes, para seguir leyendo sin internet (incluye la contraseña de los relojes) |
+Además de leer la memoria cada minuto, el reloj puede **enviar** cada fichada al agente apenas ocurre. Se configura en el Hikvision, en servidor de eventos / *HTTP Listening*, con la IP de la PC y el puerto `8095`. Solo se aceptan eventos que lleguen desde la IP de un reloj cargado en el panel.
 
 ## Problemas comunes
 
-| Síntoma | Causa probable |
+| Síntoma en el registro (`datos\agente.log`) | Qué hacer |
 |---|---|
-| `La nube rechazó la clave` | La clave se copió mal o fue revocada. Generar una nueva en el panel. |
+| `La nube rechazó la clave` | Generar una clave nueva en el panel y cargarla en `agente.properties`. |
 | `Usuario o contraseña del reloj incorrectos` | Corregir los datos del reloj en el panel. |
-| `no responde (¿apagado, desconectado o IP incorrecta?)` | El reloj cambió de IP o está fuera de la red. Revisar que tenga IP fija. |
-| `En 192.168.x.x hay otro equipo` | La IP del panel apunta a otro reloj. Se bloquea a propósito para no cargar fichadas en el reloj equivocado. |
-| `Este reloj no permite leer eventos por ISAPI` | Modelo o firmware sin esa función. Usar el modo receptor. |
-| Fichadas con el legajo correcto pero descartadas | El legajo no existe en la empresa (cargar al empleado con el mismo número que en el reloj). |
+| `no responde (¿apagado, desconectado o dirección incorrecta?)` | El reloj cambió de IP o está fuera de la red. Revisar la IP fija. |
+| `hay otro equipo (serie ...)` | La IP del panel apunta a otro reloj. Se bloquea para no cargar fichadas en el reloj equivocado. |
+| `el reloj no permite ... por ISAPI` | Instalar el SDK de Hikvision (sección anterior). |
+| `el SDK de Hikvision no está instalado` | Falta copiar el SDK en `sdk-hikvision\`. |
+| `El legajo X no existe en la empresa` | Cargar al empleado en el panel con el mismo número que en el reloj. |
 
 ## Desinstalar
 
-Clic derecho en `desinstalar.bat` → *Ejecutar como administrador*. Las fichadas pendientes quedan en `datos\` por si se reinstala.
+Clic derecho en `desinstalar.bat` → *Ejecutar como administrador*. Las fichadas pendientes quedan en `datos\`.
+
+---
 
 ## Para desarrolladores
 
-- Compilar: `mvn package` (genera `target/agente-fluxtech.jar`), o sin Maven:
-  `javac --release 11 -d out $(find src/main/java -name '*.java') && jar cfe agente-fluxtech.jar com.fluxtech.agente.Main -C out .`
-- Prueba de punta a punta con un Hikvision simulado (Digest real, paginación ISAPI) y una nube simulada:
-  `javac -cp out -d out-test src/test/java/com/fluxtech/agente/PruebaIntegral.java && java -cp out:out-test com.fluxtech.agente.PruebaIntegral`
-- API de la nube (header `X-Agent-Key`): `GET /api/agente/config`, `POST /api/agente/fichadas`, `POST /api/agente/heartbeat`.
-- Para sumar otra marca de reloj: una clase como `HikvisionIsapi` y su caso en `Agente.leerReloj`. La nube no cambia.
+### Mapa del código (`src/main/java/com/fluxtech/agente/`)
+
+| Paquete | Responsabilidad |
+|---|---|
+| `Main` | Punto de entrada: modos `--probar`, `--probar-reloj`, `--probar-sdk` e instancia única. |
+| `configuracion/` | Lee y valida `agente.properties` (exige https hacia internet). |
+| `sincronizacion/` | El ciclo: `CicloDeSincronizacion` coordina `ActualizadorDeConfiguracion` → `LecturaDeRelojes` → `SubidaDeFichadas` → heartbeat. Las reglas de negocio están en `ReglasDeLectura`. |
+| `reloj/` | `LectorDeReloj` (interfaz común) y `SeleccionadorDeLectorDeReloj` (ISAPI/SDK/automático). |
+| `reloj/hikvision/` | Lectura por ISAPI (Digest) y `CodigosDeEventoHikvision` (qué cuenta como fichada). |
+| `reloj/hikvision/sdk/` | Adaptador del SDK oficial (JNA): carga, estructuras de C, sesión, búsqueda y conversión. |
+| `cola/` | Cola persistente y estado de lectura, con escritura atómica. |
+| `receptor/` | Servidor HTTP local para los relojes que envían eventos. |
+| `nube/` | `ServicioNubeFluxTech`: único lugar que habla con la API de la nube. |
+| `json/`, `util/`, `registro/` | JSON sin dependencias, fechas y registro de eventos (`Error en [archivo] -> [función]: ...`). |
+
+Para sumar otra marca de reloj alcanza con implementar `LectorDeReloj` y agregarla al selector. La nube no cambia.
+
+### Compilar
+- `mvn package` → `target/agente-fluxtech.jar`, con JNA incluido.
+
+### Pruebas
+```
+# 1. Biblioteca nativa que imita al SDK de Hikvision (Linux)
+gcc -shared -fPIC -o sdk-simulado/libhcnetsdk.so src/test/c/hcnetsdk_simulado.c
+# 2. Compilar (JNA en el classpath)
+javac -cp jna.jar -d clases $(find src/main/java -name '*.java')
+javac -cp jna.jar:clases -d pruebas $(find src/test/java -name '*.java')
+# 3. Lector por SDK: tamaños de estructuras Java = C, flujo completo, errores
+java -cp clases:pruebas:jna.jar com.fluxtech.agente.reloj.hikvision.sdk.PruebaDelSdkHikvision sdk-simulado
+# 4. Agente de punta a punta (reloj ISAPI y nube simulados) + paso automático a SDK
+java -cp clases:pruebas:jna.jar com.fluxtech.agente.pruebas.PruebaIntegralDelAgente sdk-simulado
+```

@@ -1,10 +1,17 @@
 package com.atomg.accessmanager.controller;
 
+import com.atomg.accessmanager.dto.EstadoDeRelojInformadoDTO;
+import com.atomg.accessmanager.dto.FichadaRecibidaDeAgenteDTO;
+import com.atomg.accessmanager.dto.ResultadoDelLoteDeFichadasDTO;
 import com.atomg.accessmanager.model.Agente;
 import com.atomg.accessmanager.model.Reloj;
 import com.atomg.accessmanager.security.AgenteAuthFilter;
-import com.atomg.accessmanager.service.AgenteService;
+import com.atomg.accessmanager.service.EstadoDeAgentesService;
+import com.atomg.accessmanager.service.ProcesadorDeLotesDeFichadasService;
+import com.atomg.accessmanager.service.RelojesDelAgenteService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -17,121 +24,150 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * API que consumen los agentes locales. Autenticación: header X-Agent-Key (AgenteAuthFilter).
+ * API que consumen los agentes locales (header X-Agent-Key, validado por AgenteAuthFilter).
  *
- *  GET  /api/agente/config     → relojes a leer y desde cuándo
- *  POST /api/agente/fichadas   → lote de fichadas (idempotente: reenviar no duplica)
- *  POST /api/agente/heartbeat  → "estoy vivo" + estado de cada reloj
+ * Recorrido del dato:
+ *   GET  /api/agente/config    → RelojesDelAgenteService → relojes a leer y desde cuándo.
+ *   POST /api/agente/fichadas  → ProcesadorDeLotesDeFichadasService → resumen (guardadas, duplicadas...).
+ *   POST /api/agente/heartbeat → EstadoDeAgentesService → actualiza "En línea" en el panel.
+ *   El controlador solo traduce JSON ↔ DTO; las reglas de negocio están en los servicios.
  */
 @RestController
 @RequestMapping("/api/agente")
 public class AgenteController {
 
-    private static final int MAX_LOTE = 500;
+    private static final Logger registro = LoggerFactory.getLogger(AgenteController.class);
+    private static final int CANTIDAD_MAXIMA_DE_FICHADAS_POR_LOTE = 500;
 
     @Autowired
-    private AgenteService agenteService;
+    private RelojesDelAgenteService relojesDelAgenteService;
+
+    @Autowired
+    private ProcesadorDeLotesDeFichadasService procesadorDeLotes;
+
+    @Autowired
+    private EstadoDeAgentesService estadoDeAgentesService;
 
     @Value("${agente.intervalo-segundos:60}")
-    private int intervaloSegundos;
-
-    private Agente agente(HttpServletRequest request) {
-        return (Agente) request.getAttribute(AgenteAuthFilter.ATRIBUTO_AGENTE);
-    }
+    private int segundosEntreCiclosDelAgente;
 
     @GetMapping("/config")
-    public ResponseEntity<?> config(HttpServletRequest request) {
-        Agente agente = agente(request);
+    public ResponseEntity<?> entregarConfiguracion(HttpServletRequest pedido) {
+        Agente agente = obtenerAgenteAutenticado(pedido);
         if (agente == null) return ResponseEntity.status(401).build();
-
-        List<Map<String, Object>> relojes = new ArrayList<>();
-        for (Reloj r : agenteService.relojesDelAgente(agente)) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", r.getId());
-            m.put("nombre", r.getNombre() != null ? r.getNombre() : r.getNumeroSerie());
-            m.put("numeroSerie", r.getNumeroSerie());
-            m.put("marca", r.getMarca() != null ? r.getMarca() : "");
-            m.put("ip", r.getIp() != null ? r.getIp() : "");
-            m.put("usuario", r.getUsuario() != null ? r.getUsuario() : "");
-            // Credencial del reloj: viaja solo por HTTPS y solo al agente autenticado de esa empresa
-            m.put("password", r.getPassword() != null ? r.getPassword() : "");
-            LocalDateTime ultima = agenteService.ultimaFichadaDeReloj(r.getId());
-            m.put("ultimaFichada", ultima != null ? ultima.toString() : "");
-            relojes.add(m);
+        try {
+            List<Map<String, Object>> relojes = new ArrayList<>();
+            for (Reloj reloj : relojesDelAgenteService.obtenerRelojesDelAgente(agente)) {
+                relojes.add(convertirRelojParaElAgente(reloj));
+            }
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("agenteId", agente.getId());
+            respuesta.put("nombre", agente.getNombre());
+            respuesta.put("intervaloSegundos", segundosEntreCiclosDelAgente);
+            respuesta.put("relojes", relojes);
+            return ResponseEntity.ok(respuesta);
+        } catch (RuntimeException excepcion) {
+            registro.error("Error en AgenteController.java -> entregarConfiguracion: agente {}: {}", agente.getId(), excepcion.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo armar la configuración"));
         }
-
-        Map<String, Object> resp = new HashMap<>();
-        resp.put("agenteId", agente.getId());
-        resp.put("nombre", agente.getNombre());
-        resp.put("intervaloSegundos", intervaloSegundos);
-        resp.put("relojes", relojes);
-        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/fichadas")
-    public ResponseEntity<?> fichadas(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        Agente agente = agente(request);
+    public ResponseEntity<?> recibirLoteDeFichadas(@RequestBody Map<String, Object> cuerpo, HttpServletRequest pedido) {
+        Agente agente = obtenerAgenteAutenticado(pedido);
         if (agente == null) return ResponseEntity.status(401).build();
-
-        Object lista = body.get("fichadas");
-        if (!(lista instanceof List<?> items)) {
+        if (!(cuerpo.get("fichadas") instanceof List<?> fichadasRecibidas)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Falta la lista 'fichadas'"));
         }
-        if (items.size() > MAX_LOTE) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Máximo " + MAX_LOTE + " fichadas por lote"));
+        if (fichadasRecibidas.size() > CANTIDAD_MAXIMA_DE_FICHADAS_POR_LOTE) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Máximo " + CANTIDAD_MAXIMA_DE_FICHADAS_POR_LOTE + " fichadas por lote"));
         }
-
-        List<AgenteService.ItemFichada> parsed = new ArrayList<>();
-        for (Object o : items) {
-            if (!(o instanceof Map<?, ?> m)) continue;
-            parsed.add(new AgenteService.ItemFichada(
-                    aLong(m.get("relojId")),
-                    m.get("legajo") != null ? m.get("legajo").toString() : null,
-                    m.get("fechaHora") != null ? m.get("fechaHora").toString() : null,
-                    m.get("modo") != null ? m.get("modo").toString() : null));
+        try {
+            ResultadoDelLoteDeFichadasDTO resultado = procesadorDeLotes.procesarLote(agente, convertirFichadas(fichadasRecibidas));
+            return ResponseEntity.ok(Map.of(
+                    "recibidas", resultado.cantidadRecibida(),
+                    "guardadas", resultado.cantidadGuardada(),
+                    "duplicadas", resultado.cantidadDuplicada(),
+                    "descartadas", resultado.cantidadDescartada(),
+                    "avisos", resultado.avisos()));
+        } catch (RuntimeException excepcion) {
+            // 500 → el agente conserva el lote en su cola y reintenta en el próximo ciclo
+            registro.error("Error en AgenteController.java -> recibirLoteDeFichadas: agente {}: {}", agente.getId(), excepcion.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo procesar el lote"));
         }
-
-        AgenteService.ResultadoLote r = agenteService.procesarLote(agente, parsed);
-        return ResponseEntity.ok(Map.of(
-                "recibidas", r.recibidas(),
-                "guardadas", r.guardadas(),
-                "duplicadas", r.duplicadas(),
-                "descartadas", r.descartadas(),
-                "avisos", r.avisos()));
     }
 
     @PostMapping("/heartbeat")
-    public ResponseEntity<?> heartbeat(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        Agente agente = agente(request);
+    public ResponseEntity<?> recibirHeartbeat(@RequestBody Map<String, Object> cuerpo, HttpServletRequest pedido) {
+        Agente agente = obtenerAgenteAutenticado(pedido);
         if (agente == null) return ResponseEntity.status(401).build();
-
-        List<AgenteService.EstadoReloj> estados = new ArrayList<>();
-        if (body.get("relojes") instanceof List<?> lista) {
-            for (Object o : lista) {
-                if (!(o instanceof Map<?, ?> m)) continue;
-                estados.add(new AgenteService.EstadoReloj(
-                        aLong(m.get("id")),
-                        Boolean.TRUE.equals(m.get("ok")),
-                        m.get("error") != null ? m.get("error").toString() : null,
-                        m.get("serialDetectado") != null ? m.get("serialDetectado").toString() : null));
-            }
+        try {
+            Long fichadasPendientes = convertirANumero(cuerpo.get("pendientes"));
+            String versionDelAgente = cuerpo.get("version") != null ? cuerpo.get("version").toString() : null;
+            estadoDeAgentesService.registrarHeartbeat(agente, versionDelAgente,
+                    fichadasPendientes != null ? fichadasPendientes.intValue() : 0, convertirEstados(cuerpo.get("relojes")));
+            return ResponseEntity.ok(Map.of("ok", true));
+        } catch (RuntimeException excepcion) {
+            registro.error("Error en AgenteController.java -> recibirHeartbeat: agente {}: {}", agente.getId(), excepcion.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo registrar el estado"));
         }
-        Long pendientes = aLong(body.get("pendientes"));
-        String version = body.get("version") != null ? body.get("version").toString() : null;
-
-        agenteService.registrarHeartbeat(agente, version, pendientes != null ? pendientes.intValue() : 0, estados);
-        return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    private static Long aLong(Object o) {
-        if (o instanceof Number n) return n.longValue();
-        if (o != null) {
-            try {
-                return Long.parseLong(o.toString().trim());
-            } catch (NumberFormatException ignored) {
-                // valor inválido
+    /** El filtro de seguridad deja el agente autenticado en el pedido. */
+    private static Agente obtenerAgenteAutenticado(HttpServletRequest pedido) {
+        return (Agente) pedido.getAttribute(AgenteAuthFilter.ATRIBUTO_AGENTE);
+    }
+
+    /** Datos que necesita el agente para conectarse al reloj. La contraseña viaja solo por HTTPS y solo a su agente. */
+    private Map<String, Object> convertirRelojParaElAgente(Reloj reloj) {
+        Map<String, Object> datosDelReloj = new HashMap<>();
+        datosDelReloj.put("id", reloj.getId());
+        datosDelReloj.put("nombre", reloj.getNombre() != null ? reloj.getNombre() : reloj.getNumeroSerie());
+        datosDelReloj.put("numeroSerie", reloj.getNumeroSerie());
+        datosDelReloj.put("marca", reloj.getMarca() != null ? reloj.getMarca() : "");
+        datosDelReloj.put("ip", reloj.getIp() != null ? reloj.getIp() : "");
+        datosDelReloj.put("usuario", reloj.getUsuario() != null ? reloj.getUsuario() : "");
+        datosDelReloj.put("password", reloj.getPassword() != null ? reloj.getPassword() : "");
+        LocalDateTime ultimaFichada = relojesDelAgenteService.obtenerUltimaFichadaDelReloj(reloj.getId());
+        datosDelReloj.put("ultimaFichada", ultimaFichada != null ? ultimaFichada.toString() : "");
+        return datosDelReloj;
+    }
+
+    private static List<FichadaRecibidaDeAgenteDTO> convertirFichadas(List<?> fichadasRecibidas) {
+        List<FichadaRecibidaDeAgenteDTO> fichadas = new ArrayList<>();
+        for (Object elemento : fichadasRecibidas) {
+            if (elemento instanceof Map<?, ?> fichada) {
+                fichadas.add(new FichadaRecibidaDeAgenteDTO(convertirANumero(fichada.get("relojId")), convertirATexto(fichada.get("legajo")),
+                        convertirATexto(fichada.get("fechaHora")), convertirATexto(fichada.get("modo"))));
             }
         }
-        return null;
+        return fichadas;
+    }
+
+    private static List<EstadoDeRelojInformadoDTO> convertirEstados(Object listaDeEstados) {
+        List<EstadoDeRelojInformadoDTO> estados = new ArrayList<>();
+        if (listaDeEstados instanceof List<?> lista) {
+            for (Object elemento : lista) {
+                if (elemento instanceof Map<?, ?> estado) {
+                    estados.add(new EstadoDeRelojInformadoDTO(convertirANumero(estado.get("id")), Boolean.TRUE.equals(estado.get("ok")),
+                            convertirATexto(estado.get("error")), convertirATexto(estado.get("serialDetectado")), convertirATexto(estado.get("metodo"))));
+                }
+            }
+        }
+        return estados;
+    }
+
+    private static String convertirATexto(Object valor) {
+        return valor != null ? valor.toString() : null;
+    }
+
+    private static Long convertirANumero(Object valor) {
+        if (valor instanceof Number numero) return numero.longValue();
+        if (valor == null) return null;
+        try {
+            return Long.parseLong(valor.toString().trim());
+        } catch (NumberFormatException valorInvalido) {
+            return null;
+        }
     }
 }

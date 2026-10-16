@@ -1,0 +1,12 @@
+CARPETA DEL SDK DE HIKVISION (opcional)
+=======================================
+
+Solo hace falta si el reloj NO se puede leer por ISAPI (probar-reloj.bat lo indica).
+
+1. Descargar "Device Network SDK" (HCNetSDK) para Windows 64 bits desde el sitio de Hikvision
+   (seccion Soporte > Herramientas / SDK). Es gratuito.
+2. Descomprimir y copiar en ESTA carpeta (sdk-hikvision) el CONTENIDO de la carpeta "lib" del SDK:
+     HCNetSDK.dll, HCCore.dll, la carpeta HCNetSDKCom y las bibliotecas libcrypto/libssl que trae.
+3. Volver a ejecutar probar-reloj.bat: tiene que aparecer "Metodo SDK ... [OK]".
+
+Importante: Java y el SDK tienen que ser ambos de 64 bits.

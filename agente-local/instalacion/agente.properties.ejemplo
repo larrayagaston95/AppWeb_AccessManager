@@ -12,6 +12,18 @@ agente.clave=fxa_PEGAR_ACA_LA_CLAVE
 
 # ---- Opcionales (normalmente no hace falta tocarlos) ----
 
+# Como leer los relojes Hikvision:
+#   automatico = primero ISAPI (red, sin instalar nada); si el reloj no lo permite, el SDK oficial
+#   isapi      = solo ISAPI
+#   sdk        = solo el SDK oficial de Hikvision (requiere sus archivos en la carpeta indicada abajo)
+hikvision.modo=automatico
+
+# Carpeta (junto al .jar) donde se copian los archivos del SDK de Hikvision (HCNetSDK.dll y demas)
+hikvision.sdk.carpeta=sdk-hikvision
+
+# Puerto del SDK en el reloj (el que usa iVMS-4200; normalmente 8000)
+hikvision.sdk.puerto=8000
+
 # Receptor: puerto donde el reloj puede ENVIAR sus eventos en tiempo real (red local).
 receptor.habilitado=true
 receptor.puerto=8095

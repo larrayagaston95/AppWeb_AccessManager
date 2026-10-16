@@ -2,3 +2,4 @@ target/
 datos/
 agente.properties
 *.jar
+lib/

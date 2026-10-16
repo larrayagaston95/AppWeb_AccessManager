@@ -29,7 +29,7 @@ if (-not (Test-Path $Props)) {
 Write-Host ""
 Write-Host "Probando la configuracion..." -ForegroundColor Cyan
 $java = Join-Path (Split-Path $javaw) "java.exe"
-& $java "-Dsun.stdout.encoding=UTF-8" "-Dstdout.encoding=UTF-8" -jar $Jar --probar
+& $java "-Dsun.stdout.encoding=UTF-8" "-Dstdout.encoding=UTF-8" "-Dsun.stderr.encoding=UTF-8" "-Dstderr.encoding=UTF-8" -jar $Jar --probar
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     $r = Read-Host "El diagnostico encontro problemas. Instalar igual? (s/n)"

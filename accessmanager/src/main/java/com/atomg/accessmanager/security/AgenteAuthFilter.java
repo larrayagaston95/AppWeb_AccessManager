@@ -21,50 +21,64 @@ import java.util.Optional;
 
 /**
  * Autentica a los agentes locales en /api/agente/** con el header X-Agent-Key.
- * Si la clave es válida y el agente está activo, deja el agente en el atributo
- * ATRIBUTO_AGENTE y concede ROLE_AGENTE. Si no, la petición sigue sin autenticar y
- * Spring Security la rechaza.
+ *
+ * Recorrido del dato:
+ *   1. Llega un pedido del agente con "X-Agent-Key: fxa_<prefijo>_<secreto>".
+ *   2. Se busca el agente por el prefijo (AgenteRepository) y se compara el hash de la clave.
+ *   3. Si coincide y el agente está activo: se deja el Agente en el atributo ATRIBUTO_AGENTE del
+ *      pedido y se concede ROLE_AGENTE. El controlador lo toma de ahí.
+ *   4. Si no: el pedido sigue sin autenticar y Spring Security responde 403.
  */
 @Component
 public class AgenteAuthFilter extends OncePerRequestFilter {
 
-    public static final String HEADER = "X-Agent-Key";
+    public static final String CABECERA_DE_LA_CLAVE = "X-Agent-Key";
     public static final String ATRIBUTO_AGENTE = "agente";
 
-    private static final Logger log = LoggerFactory.getLogger(AgenteAuthFilter.class);
+    private static final Logger registro = LoggerFactory.getLogger(AgenteAuthFilter.class);
 
     @Autowired
     private AgenteRepository agenteRepository;
 
+    /** Solo actúa sobre la API de agentes; el resto de los pedidos ni se mira. */
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getServletPath().startsWith("/api/agente/");
+    protected boolean shouldNotFilter(HttpServletRequest pedido) {
+        return !pedido.getServletPath().startsWith("/api/agente/");
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(HttpServletRequest pedido, HttpServletResponse respuesta, FilterChain cadenaDeFiltros)
             throws ServletException, IOException {
 
-        String clave = request.getHeader(HEADER);
-        String prefijo = AgenteClaves.extraerPrefijo(clave);
+        String claveRecibida = pedido.getHeader(CABECERA_DE_LA_CLAVE);
+        String prefijo = AgenteClaves.extraerPrefijo(claveRecibida);
 
         if (prefijo != null) {
-            Optional<Agente> agenteOpt = agenteRepository.findByClavePrefijo(prefijo);
-            if (agenteOpt.isPresent()
-                    && agenteOpt.get().isActivo()
-                    && AgenteClaves.coincide(clave, agenteOpt.get().getClaveHash())) {
-
-                Agente agente = agenteOpt.get();
-                request.setAttribute(ATRIBUTO_AGENTE, agente);
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+            Optional<Agente> agenteEncontrado = buscarAgentePorPrefijo(prefijo);
+            boolean claveValida = agenteEncontrado.isPresent()
+                    && agenteEncontrado.get().isActivo()
+                    && AgenteClaves.coincide(claveRecibida, agenteEncontrado.get().getClaveHash());
+            if (claveValida) {
+                Agente agente = agenteEncontrado.get();
+                pedido.setAttribute(ATRIBUTO_AGENTE, agente);
+                UsernamePasswordAuthenticationToken autenticacion = new UsernamePasswordAuthenticationToken(
                         "agente:" + agente.getId(), null, List.of(new SimpleGrantedAuthority("ROLE_AGENTE")));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(autenticacion);
             } else {
-                log.warn("[SEGURIDAD] Clave de agente inválida o revocada (prefijo {}, IP {})",
-                        prefijo, request.getRemoteAddr());
+                registro.warn("[SEGURIDAD] Clave de agente inválida o revocada (prefijo {}, IP {})", prefijo, pedido.getRemoteAddr());
             }
         }
 
-        chain.doFilter(request, response);
+        cadenaDeFiltros.doFilter(pedido, respuesta);
+    }
+
+    /** Consulta a la base; si falla, el pedido queda sin autenticar (nunca se concede acceso por un error). */
+    private Optional<Agente> buscarAgentePorPrefijo(String prefijo) {
+        try {
+            return agenteRepository.findByClavePrefijo(prefijo);
+        } catch (RuntimeException excepcion) {
+            registro.error("Error en AgenteAuthFilter.java -> buscarAgentePorPrefijo: {}", excepcion.getMessage());
+            return Optional.empty();
+        }
     }
 }

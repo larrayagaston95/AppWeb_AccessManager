@@ -180,9 +180,18 @@ public class AsistenciaService {
                             + " | entrada actual=" + reporte.getEntrada()
                             + " → Registrando SALIDA=" + fichada.getFechaHora());
 
-                    reporte.setSalida(fichada.getFechaHora());
+                    // Independiente del orden de llegada (el agente local puede subir fichadas
+                    // atrasadas): entrada = la más temprana del día, salida = la más tardía.
+                    // Si llegan en orden, el resultado es el mismo que antes.
+                    LocalDateTime nueva = fichada.getFechaHora();
+                    LocalDateTime primera = reporte.getEntrada();
+                    LocalDateTime ultima = reporte.getSalida() != null ? reporte.getSalida() : reporte.getEntrada();
+                    if (primera == null || nueva.isBefore(primera)) primera = nueva;
+                    if (ultima == null || nueva.isAfter(ultima)) ultima = nueva;
+                    reporte.setEntrada(primera);
+                    reporte.setSalida(ultima.equals(primera) ? null : ultima);
 
-                    if (reporte.getEntrada() != null) {
+                    if (reporte.getEntrada() != null && reporte.getSalida() != null) {
                         Duration duracion = Duration.between(reporte.getEntrada(), reporte.getSalida());
                         double horasTrabajadas = duracion.toMinutes() / 60.0;
                         reporte.setHorasTrabajadas(Math.round(horasTrabajadas * 100.0) / 100.0);

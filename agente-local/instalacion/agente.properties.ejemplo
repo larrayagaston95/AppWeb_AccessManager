@@ -1,0 +1,41 @@
+# ============================================================
+#  Agente local FluxTech - configuracion
+#  Copiar este archivo como "agente.properties" y completar.
+# ============================================================
+
+# Direccion del servidor de FluxTech (siempre https://)
+servidor.url=https://app.tudominio.com.ar
+
+# Clave del agente: se genera en el panel de FluxTech (SuperAdmin > Agentes locales).
+# Se muestra una sola vez; si se pierde, generar una nueva desde el panel.
+agente.clave=fxa_PEGAR_ACA_LA_CLAVE
+
+# ---- Opcionales (normalmente no hace falta tocarlos) ----
+
+# Como leer los relojes Hikvision:
+#   automatico = primero ISAPI (red, sin instalar nada); si el reloj no lo permite, el SDK oficial
+#   isapi      = solo ISAPI
+#   sdk        = solo el SDK oficial de Hikvision (requiere sus archivos en la carpeta indicada abajo)
+hikvision.modo=automatico
+
+# Carpeta (junto al .jar) donde se copian los archivos del SDK de Hikvision (HCNetSDK.dll y demas)
+hikvision.sdk.carpeta=sdk-hikvision
+
+# Puerto del SDK en el reloj (el que usa iVMS-4200; normalmente 8000)
+hikvision.sdk.puerto=8000
+
+# Receptor: puerto donde el reloj puede ENVIAR sus eventos en tiempo real (red local).
+receptor.habilitado=true
+receptor.puerto=8095
+
+# Lectura de la memoria del reloj (recupera todo lo fichado mientras la PC estuvo apagada).
+lectura.habilitada=true
+
+# La primera vez, cuantos dias hacia atras leer del reloj.
+lectura.dias-iniciales=31
+
+# Cada cuantos segundos leer y subir (0 = lo que indique el servidor, normalmente 60).
+intervalo.segundos=0
+
+# true = registra en el log cada evento que manda el reloj (solo para diagnosticar).
+log.detalle=false

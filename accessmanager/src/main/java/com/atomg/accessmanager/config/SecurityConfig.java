@@ -27,6 +27,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Autowired
+    private com.atomg.accessmanager.security.AgenteAuthFilter agenteAuthFilter;
+
     /** Orígenes permitidos (CORS_ALLOWED_ORIGINS), separados por coma. "*" = cualquiera. */
     @Value("${app.cors.allowed-origins:*}")
     private String allowedOrigins;
@@ -85,6 +88,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/calculo/**").hasAuthority("ROLE_SUPERADMIN")
                 // Preflight OPTIONS: siempre permitir sin token
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                // Agentes locales: autenticados con su clave (X-Agent-Key)
+                .requestMatchers("/api/agente/**").hasAuthority("ROLE_AGENTE")
                 // Panel SuperAdmin: solo ROLE_SUPERADMIN
                 // hasAuthority("ROLE_SUPERADMIN") coincide con el valor exacto guardado en BD y en el JWT
                 .requestMatchers("/api/superadmin/**").hasAuthority("ROLE_SUPERADMIN")
@@ -93,6 +98,7 @@ public class SecurityConfig {
                 // Estaticos y SPA: libre
                 .anyRequest().permitAll()
             )
+            .addFilterBefore(agenteAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
